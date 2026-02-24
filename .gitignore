@@ -9,8 +9,24 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
+.DS_Store
+
+# Environment files
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.DS_Store
+
+# Android/iOS build output
+android/
+ios/
+
+# Backend
+backend/__pycache__/
+backend/.venv/
+backend/*.pyc
+
+# Dashboard
+dashboard/node_modules/
+dashboard/dist/
