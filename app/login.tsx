@@ -75,6 +75,15 @@ export default function LoginScreen() {
             {loading ? 'Signing in...' : 'Sign In'}
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          className="mt-4 items-center"
+          onPress={() => router.replace('/register')}
+        >
+          <Text className="text-blue-500 text-sm">
+            Don't have an account? Create Account
+          </Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
