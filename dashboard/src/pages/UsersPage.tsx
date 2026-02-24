@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { apiGet, apiPost, apiPatch } from '@/lib/api';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { SkeletonTable, EmptyState } from '@/components/Skeleton';
 import type { Profile } from '@/types';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
@@ -86,12 +87,12 @@ export function UsersPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Users</h1>
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-bold text-gray-800">Users</h1>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600"
+          className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-600"
         >
           <Plus size={16} />
           Add User
@@ -99,7 +100,7 @@ export function UsersPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
           <h3 className="font-semibold mb-3">New User</h3>
           {formError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3 text-red-600 text-sm">
@@ -136,11 +137,13 @@ export function UsersPage() {
 
       <div className="bg-white rounded-lg border border-gray-200">
         {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
-          </div>
+          <SkeletonTable rows={5} cols={5} />
         ) : users.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No users found</p>
+          <EmptyState
+            icon="👥"
+            title="No users found"
+            description="Add users to manage your team."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>

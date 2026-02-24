@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { SidebarProvider } from '@/contexts/SidebarContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
@@ -16,13 +17,15 @@ import { UsersPage } from '@/pages/UsersPage';
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+    <SidebarProvider>
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <Header />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
 

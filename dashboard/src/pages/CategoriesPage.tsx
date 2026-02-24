@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { EmptyState } from '@/components/Skeleton';
 import type { Category } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -59,12 +60,12 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Categories</h1>
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-bold text-gray-800">Categories</h1>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600"
+          className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-600"
         >
           <Plus size={16} />
           Add Category
@@ -72,7 +73,7 @@ export function CategoriesPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
           <h3 className="font-semibold mb-3">{editTarget ? 'Edit Category' : 'New Category'}</h3>
           <div className="space-y-3">
             <input
@@ -110,7 +111,11 @@ export function CategoriesPage() {
 
       <div className="bg-white rounded-lg border border-gray-200">
         {categories.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No categories yet</p>
+          <EmptyState
+            icon="🏷️"
+            title="No categories yet"
+            description="Create categories to organize your products."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>
