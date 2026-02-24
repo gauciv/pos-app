@@ -11,6 +11,7 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   async function handleRegister() {
     if (!fullName.trim() || !email.trim() || !password.trim()) {
@@ -33,12 +34,37 @@ export default function RegisterScreen() {
 
     try {
       await signUp(email.trim(), password, fullName.trim());
-      router.replace('/(collector)/home');
+      setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (success) {
+    return (
+      <View className="flex-1 bg-white justify-center px-8">
+        <View className="items-center mb-6">
+          <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center mb-4">
+            <Text className="text-3xl">✉️</Text>
+          </View>
+          <Text className="text-xl font-bold text-gray-800 mb-2">Check your email</Text>
+          <Text className="text-sm text-gray-500 text-center">
+            We sent a confirmation link to{' '}
+            <Text className="font-medium text-gray-700">{email}</Text>.
+            {'\n'}Click the link to activate your account.
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          className="rounded-lg py-4 items-center bg-blue-500"
+          onPress={() => router.replace('/login')}
+        >
+          <Text className="text-white font-semibold text-base">Back to Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (

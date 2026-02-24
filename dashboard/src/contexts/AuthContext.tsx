@@ -51,21 +51,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function fetchProfile(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+  async function fetchProfile(userId: string, retries = 3): Promise<void> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
 
-      if (error) throw error;
-      setUser(data);
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
+        if (error) throw error;
+        setUser(data);
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        console.error(`fetchProfile attempt ${i + 1} failed:`, err);
+        if (i < retries - 1) {
+          await new Promise((r) => setTimeout(r, 1000));
+        } else {
+          setUser(null);
+        }
+      }
     }
+    setIsLoading(false);
   }
 
   async function signIn(email: string, password: string) {

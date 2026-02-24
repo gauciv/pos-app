@@ -242,7 +242,19 @@ end;
 $$ language plpgsql security definer;
 
 -- ============================================
--- 4. Row Level Security
+-- 4. Admin role helper (SECURITY DEFINER to avoid RLS recursion)
+-- ============================================
+
+create or replace function public.is_admin()
+returns boolean as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+$$ language sql security definer stable;
+
+-- ============================================
+-- 5. Row Level Security
 -- ============================================
 
 alter table public.profiles enable row level security;
@@ -260,7 +272,7 @@ create policy "Users can read own profile"
 
 create policy "Admins can read all profiles"
   on public.profiles for select
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 create policy "Users can update own profile"
   on public.profiles for update
@@ -268,7 +280,7 @@ create policy "Users can update own profile"
 
 create policy "Admins can update any profile"
   on public.profiles for update
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 -- Stores policies
 create policy "Authenticated users can read active stores"
@@ -277,7 +289,7 @@ create policy "Authenticated users can read active stores"
 
 create policy "Admins can manage stores"
   on public.stores for all
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 -- Categories policies
 create policy "Authenticated users can read categories"
@@ -286,7 +298,7 @@ create policy "Authenticated users can read categories"
 
 create policy "Admins can manage categories"
   on public.categories for all
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 -- Products policies
 create policy "Authenticated users can read active products"
@@ -295,7 +307,7 @@ create policy "Authenticated users can read active products"
 
 create policy "Admins can manage products"
   on public.products for all
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 -- Orders policies
 create policy "Collectors can read own orders"
@@ -304,7 +316,7 @@ create policy "Collectors can read own orders"
 
 create policy "Admins can read all orders"
   on public.orders for select
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 create policy "Collectors can create orders"
   on public.orders for insert
@@ -312,7 +324,7 @@ create policy "Collectors can create orders"
 
 create policy "Admins can update orders"
   on public.orders for update
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 -- Order items policies
 create policy "Users can read order items for their orders"
@@ -321,8 +333,7 @@ create policy "Users can read order items for their orders"
     exists (
       select 1 from public.orders
       where orders.id = order_items.order_id
-        and (orders.collector_id = auth.uid()
-          or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'))
+        and (orders.collector_id = auth.uid() or public.is_admin())
     )
   );
 
@@ -339,10 +350,10 @@ create policy "Collectors can insert order items"
 -- Inventory logs policies
 create policy "Admins can read inventory logs"
   on public.inventory_logs for select
-  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+  using (public.is_admin());
 
 -- ============================================
--- 5. Enable Realtime
+-- 6. Enable Realtime
 -- ============================================
 
 alter publication supabase_realtime add table public.orders;
