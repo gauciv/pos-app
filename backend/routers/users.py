@@ -66,8 +66,10 @@ async def toggle_active(
     try:
         result = user_service.toggle_active(user_id, is_active)
         return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{user_id}/regenerate-code")

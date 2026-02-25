@@ -15,7 +15,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState<Profile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
@@ -73,7 +73,7 @@ export function UsersPage() {
         tag: tag.trim() || undefined,
       });
       toast.success('Collector created');
-      setShowForm(false);
+      setShowCreateModal(false);
       resetForm();
       await fetchUsers();
     } catch (err: unknown) {
@@ -155,7 +155,7 @@ export function UsersPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold text-gray-800">Collectors</h1>
         <button
-          onClick={() => { resetForm(); setShowForm(true); }}
+          onClick={() => { resetForm(); setShowCreateModal(true); }}
           className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-600"
         >
           <Plus size={16} />
@@ -163,75 +163,12 @@ export function UsersPage() {
         </button>
       </div>
 
-      {showForm && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-          <h3 className="font-semibold mb-3">New Collector</h3>
-          {formError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3 text-red-600 text-sm">
-              {formError}
-            </div>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Nickname"
-              className="border border-gray-300 rounded-lg px-3 py-2"
-            />
-            <div>
-              <select
-                value={branchId}
-                onChange={(e) => setBranchId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
-              >
-                <option value="">Select branch...</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-              {branches.length === 0 && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/branches')}
-                  className="text-xs text-blue-500 hover:text-blue-700 mt-1"
-                >
-                  No branches yet - create one first
-                </button>
-              )}
-            </div>
-            <input
-              type="text"
-              value={tag}
-              onChange={(e) => setTag(e.target.value)}
-              placeholder="Tag (optional)"
-              className="border border-gray-300 rounded-lg px-3 py-2"
-            />
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleCreateUser}
-              disabled={formLoading}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 disabled:bg-blue-300"
-            >
-              {formLoading ? 'Creating...' : 'Create Collector'}
-            </button>
-            <button
-              onClick={() => setShowForm(false)}
-              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="bg-white rounded-lg border border-gray-200">
         {loading ? (
           <SkeletonTable rows={5} cols={6} />
         ) : users.length === 0 ? (
           <EmptyState
-            icon="👥"
+            icon="users"
             title="No collectors found"
             description="Add collectors to manage your team."
           />
@@ -327,6 +264,79 @@ export function UsersPage() {
           </table>
         )}
       </div>
+
+      {/* Create Collector Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">New Collector</h3>
+            {formError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-600 text-sm">
+                {formError}
+              </div>
+            )}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="Enter nickname"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                <select
+                  value={branchId}
+                  onChange={(e) => setBranchId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
+                >
+                  <option value="">Select branch...</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+                {branches.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowCreateModal(false); navigate('/branches'); }}
+                    className="text-xs text-blue-500 hover:text-blue-700 mt-1"
+                  >
+                    No branches yet - create one first
+                  </button>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tag (optional)</label>
+                <input
+                  type="text"
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  placeholder="Enter tag"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => { setShowCreateModal(false); resetForm(); }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateUser}
+                disabled={formLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:bg-blue-300"
+              >
+                {formLoading ? 'Creating...' : 'Create Collector'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Deactivate confirmation */}
       {deactivateTarget && (

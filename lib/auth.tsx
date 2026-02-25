@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, branches:branch_id(name)')
           .eq('id', userId)
           .single();
 
@@ -67,6 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: data.email,
           full_name: data.full_name,
           role: data.role,
+          branch_id: data.branch_id || null,
+          branch_name: (data.branches as any)?.name || null,
         });
         setIsLoading(false);
         return;
@@ -96,17 +98,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { token_hash, email, otp, user_id } = await response.json();
 
-    // Try token_hash first, fall back to OTP
+    // Try OTP first (more reliable), fall back to token_hash
     let authError;
-    if (token_hash) {
-      const result = await supabase.auth.verifyOtp({
-        token_hash,
-        type: 'magiclink',
-      });
-      authError = result.error;
-    }
-
-    if (authError && otp && email) {
+    if (otp && email) {
       const result = await supabase.auth.verifyOtp({
         email,
         token: otp,
@@ -115,10 +109,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authError = result.error;
     }
 
-    if (authError) throw authError;
+    if (authError && token_hash) {
+      const result = await supabase.auth.verifyOtp({
+        token_hash,
+        type: 'magiclink',
+      });
+      authError = result.error;
+    }
+
+    // Check if a session was established despite any errors
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession && authError) {
+      throw authError;
+    }
 
     // Mark device as connected after successful auth
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
     if (currentSession && user_id) {
       await fetch(`${API_BASE_URL}/auth/mark-connected`, {
         method: 'POST',

@@ -20,7 +20,6 @@ export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDeta
   );
   const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [codeWasRegenerated, setCodeWasRegenerated] = useState(false);
 
   // Inline editing state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -75,7 +74,6 @@ export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDeta
         `/users/${user.id}`
       );
       setActivationCode(updatedUser.activation_code || null);
-      setCodeWasRegenerated(true);
       toast.success('Activation code regenerated');
       onUpdated();
     } catch {
@@ -86,8 +84,8 @@ export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDeta
   }
 
   async function handleClose() {
-    // Invalidate code on close if it was regenerated during this session
-    if (codeWasRegenerated && activationCode && !activationCode.is_used) {
+    // Always invalidate any unused activation code when modal closes
+    if (activationCode && !activationCode.is_used) {
       try {
         await apiPost(`/users/${user.id}/invalidate-code`, {});
       } catch {
@@ -270,11 +268,9 @@ export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDeta
                     Expires {formatDistanceToNow(new Date(activationCode.expires_at), { addSuffix: true })}
                   </p>
 
-                  {codeWasRegenerated && (
-                    <p className="text-xs text-amber-500 text-center mb-3">
-                      This code will be invalidated when you close this modal
-                    </p>
-                  )}
+                  <p className="text-xs text-amber-500 text-center mb-3">
+                    This code will be invalidated the moment this modal is closed
+                  </p>
                 </>
               ) : (
                 <p className="text-sm text-gray-500 text-center mb-3">

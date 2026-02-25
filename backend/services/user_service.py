@@ -38,8 +38,8 @@ def list_users(role: str | None = None, is_active: bool | None = None) -> list[d
 
 
 def get_user(user_id: str) -> dict | None:
-    result = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
-    return result.data
+    result = supabase.table("profiles").select("*").eq("id", user_id).execute()
+    return result.data[0] if result.data else None
 
 
 def create_user(nickname: str, branch_id: str, tag: str | None = None) -> dict:
@@ -48,13 +48,12 @@ def create_user(nickname: str, branch_id: str, tag: str | None = None) -> dict:
         supabase.table("branches")
         .select("name")
         .eq("id", branch_id)
-        .single()
         .execute()
     )
     if not branch.data:
         raise ValueError("Branch not found")
 
-    branch_name = branch.data["name"]
+    branch_name = branch.data[0]["name"]
     display_id = generate_display_id(branch_name)
 
     # Generate synthetic email and random password (collectors use activation codes)
@@ -85,9 +84,9 @@ def create_user(nickname: str, branch_id: str, tag: str | None = None) -> dict:
     # Auto-generate activation code
     code = activation_service.create_activation_code(user_id)
 
-    profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+    profile = supabase.table("profiles").select("*").eq("id", user_id).execute()
 
-    return {**profile.data, "activation_code": code}
+    return {**profile.data[0], "activation_code": code}
 
 
 def update_user(user_id: str, data: dict) -> dict:
@@ -98,10 +97,11 @@ def update_user(user_id: str, data: dict) -> dict:
         supabase.table("profiles")
         .update(update_data)
         .eq("id", user_id)
-        .single()
         .execute()
     )
-    return result.data
+    if not result.data:
+        raise ValueError("User not found")
+    return result.data[0]
 
 
 def toggle_active(user_id: str, is_active: bool) -> dict:
@@ -109,10 +109,11 @@ def toggle_active(user_id: str, is_active: bool) -> dict:
         supabase.table("profiles")
         .update({"is_active": is_active})
         .eq("id", user_id)
-        .single()
         .execute()
     )
-    return result.data
+    if not result.data:
+        raise ValueError("User not found")
+    return result.data[0]
 
 
 def delete_user(user_id: str):

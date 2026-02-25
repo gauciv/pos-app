@@ -1,6 +1,40 @@
 from database import supabase
 
 
+def resolve_store_from_branch(branch_id: str | None) -> str | None:
+    """Find or create a store entry for a branch. Returns store_id."""
+    if not branch_id:
+        return None
+
+    # Get branch details
+    branch_result = (
+        supabase.table("branches").select("name, location").eq("id", branch_id).execute()
+    )
+    if not branch_result.data:
+        return None
+
+    branch = branch_result.data[0]
+    branch_name = branch["name"]
+
+    # Check if a store already exists for this branch (match by name)
+    existing = (
+        supabase.table("stores")
+        .select("id")
+        .eq("name", branch_name)
+        .limit(1)
+        .execute()
+    )
+    if existing.data:
+        return existing.data[0]["id"]
+
+    # Create a store entry for this branch
+    store_result = supabase.table("stores").insert({
+        "name": branch_name,
+        "address": branch.get("location"),
+    }).execute()
+    return store_result.data[0]["id"]
+
+
 def create_order(collector_id: str, store_id: str, notes: str | None, items: list[dict]) -> dict:
     items_jsonb = [{"product_id": item["product_id"], "quantity": item["quantity"]} for item in items]
     result = supabase.rpc(
@@ -48,10 +82,9 @@ def get_order(order_id: str) -> dict | None:
             "*, order_items(*), profiles!orders_collector_id_fkey(full_name, email), stores(name, address)"
         )
         .eq("id", order_id)
-        .single()
         .execute()
     )
-    return result.data
+    return result.data[0] if result.data else None
 
 
 def update_order_status(order_id: str, status: str) -> dict:
@@ -59,7 +92,8 @@ def update_order_status(order_id: str, status: str) -> dict:
         supabase.table("orders")
         .update({"status": status})
         .eq("id", order_id)
-        .single()
         .execute()
     )
-    return result.data
+    if not result.data:
+        raise ValueError("Order not found")
+    return result.data[0]

@@ -40,10 +40,16 @@ async def get_order(order_id: str, user: Annotated[dict, Depends(get_current_use
 @router.post("")
 async def create_order(body: OrderCreate, user: Annotated[dict, Depends(require_collector)]):
     try:
+        store_id = body.store_id
+        # Auto-resolve store from collector's branch if not provided
+        if not store_id:
+            store_id = order_service.resolve_store_from_branch(user.get("branch_id"))
+        if not store_id:
+            raise ValueError("No store assigned. Collector must belong to a branch.")
         items = [item.model_dump() for item in body.items]
         result = order_service.create_order(
             collector_id=user["id"],
-            store_id=body.store_id,
+            store_id=store_id,
             notes=body.notes,
             items=items,
         )

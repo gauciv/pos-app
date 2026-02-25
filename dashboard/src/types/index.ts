@@ -28,6 +28,7 @@ export interface ActivationCode {
 export interface Branch {
   id: string;
   name: string;
+  display_id: string | null;
   location: string | null;
   is_active: boolean;
   created_at: string;

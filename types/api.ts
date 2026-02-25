@@ -11,7 +11,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface CreateOrderRequest {
-  store_id: string;
+  store_id?: string;
   notes?: string;
   items: {
     product_id: string;

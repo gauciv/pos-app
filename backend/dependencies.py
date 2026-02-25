@@ -31,15 +31,17 @@ def get_current_user(
         )
 
     # Fetch profile using service role client (bypasses RLS)
-    result = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+    result = supabase.table("profiles").select("*").eq("id", user_id).execute()
     if not result.data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
 
+    profile = result.data[0]
+
     # Reject deactivated accounts
-    if not result.data.get("is_active", True):
+    if not profile.get("is_active", True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is deactivated",
@@ -53,7 +55,7 @@ def get_current_user(
     except Exception:
         pass  # Non-critical, don't fail the request
 
-    return result.data
+    return profile
 
 
 def require_admin(

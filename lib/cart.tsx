@@ -76,8 +76,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
-    setStoreId(null);
-    setStoreName(null);
+    // Don't reset store - it's tied to the user's branch
   }, []);
 
   const getSubtotal = useCallback(() => {

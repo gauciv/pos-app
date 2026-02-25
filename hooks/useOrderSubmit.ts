@@ -4,13 +4,13 @@ import { useCart } from '@/lib/cart';
 import type { CreateOrderResponse } from '@/types';
 
 export function useOrderSubmit() {
-  const { items, storeId, clearCart } = useCart();
+  const { items, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submitOrder(notes?: string): Promise<CreateOrderResponse | null> {
-    if (!storeId || items.length === 0) {
-      setError('No store selected or cart is empty');
+    if (items.length === 0) {
+      setError('Cart is empty');
       return null;
     }
 
@@ -19,7 +19,6 @@ export function useOrderSubmit() {
 
     try {
       const result = await createOrder({
-        store_id: storeId,
         notes,
         items: items.map((item) => ({
           product_id: item.product_id,

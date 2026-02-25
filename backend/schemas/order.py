@@ -7,7 +7,7 @@ class OrderItemCreate(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    store_id: str
+    store_id: str | None = None
     notes: str | None = None
     items: list[OrderItemCreate]
 

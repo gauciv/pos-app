@@ -35,6 +35,17 @@ async def get_branch(
     return result
 
 
+@router.get("/{branch_id}/collectors")
+async def get_branch_collectors(
+    branch_id: str, admin: Annotated[dict, Depends(require_admin)]
+):
+    """Get all collectors belonging to a branch."""
+    result = branch_service.get_branch(branch_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    return branch_service.get_branch_collectors(branch_id)
+
+
 @router.put("/{branch_id}")
 async def update_branch(
     branch_id: str,
@@ -44,8 +55,10 @@ async def update_branch(
     try:
         result = branch_service.update_branch(branch_id, body.model_dump(exclude_none=True))
         return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{branch_id}")

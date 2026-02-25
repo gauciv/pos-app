@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
+
+const CONSECUTIVE_FAILURES_THRESHOLD = 3;
+const POLL_INTERVAL = 30000;
+const TIMEOUT_MS = 8000;
 
 export function useNetworkStatus() {
   const [isConnected, setIsConnected] = useState(true);
+  const failureCount = useRef(0);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
-      const handleOnline = () => setIsConnected(true);
+      const handleOnline = () => { failureCount.current = 0; setIsConnected(true); };
       const handleOffline = () => setIsConnected(false);
       window.addEventListener('online', handleOnline);
       window.addEventListener('offline', handleOffline);
@@ -17,21 +22,29 @@ export function useNetworkStatus() {
       };
     }
 
-    // For native, we use a simple polling approach to avoid extra dependency
     const checkConnection = async () => {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        await fetch('https://httpbin.org/get', { method: 'HEAD', signal: controller.signal });
+        const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        // Use Google's connectivity check (highly reliable, fast response)
+        await fetch('https://www.google.com/generate_204', {
+          method: 'HEAD',
+          signal: controller.signal,
+          cache: 'no-store',
+        });
         clearTimeout(timeout);
+        failureCount.current = 0;
         setIsConnected(true);
       } catch {
-        setIsConnected(false);
+        failureCount.current += 1;
+        if (failureCount.current >= CONSECUTIVE_FAILURES_THRESHOLD) {
+          setIsConnected(false);
+        }
       }
     };
 
     checkConnection();
-    const interval = setInterval(checkConnection, 30000);
+    const interval = setInterval(checkConnection, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, []);
 

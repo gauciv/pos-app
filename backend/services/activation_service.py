@@ -47,14 +47,13 @@ def validate_and_consume_code(code: str) -> str:
         .select("*")
         .eq("code", code)
         .eq("is_used", False)
-        .single()
         .execute()
     )
 
     if not result.data:
         raise ValueError("Invalid activation code")
 
-    activation = result.data
+    activation = result.data[0]
 
     # Check expiry
     expires_at = datetime.fromisoformat(activation["expires_at"].replace("Z", "+00:00"))

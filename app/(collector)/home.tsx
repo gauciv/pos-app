@@ -1,25 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
-import { useStores } from '@/hooks/useStores';
-import { StoreSelector } from '@/components/StoreSelector';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { formatShortDate } from '@/lib/formatters';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { storeId, setStore, getItemCount } = useCart();
-  const { stores, loading, error } = useStores();
+  const { setStore, getItemCount } = useCart();
   const cartCount = getItemCount();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  if (loading) {
-    return <LoadingSpinner message="Loading stores..." />;
-  }
+  // Auto-set store from user's branch
+  useEffect(() => {
+    if (user?.branch_id && user?.branch_name) {
+      setStore(user.branch_id, user.branch_name);
+    }
+  }, [user?.branch_id, user?.branch_name, setStore]);
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -43,34 +42,24 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Store Selection */}
-          <View className="mb-6">
-            <Text className="text-lg font-semibold text-gray-800 mb-3">
-              Select Client Store
+          {/* Branch Info */}
+          <View className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+            <Text className="text-xs text-gray-500 mb-1">Your Branch</Text>
+            <Text className="text-lg font-semibold text-gray-800">
+              {user?.branch_name || 'Not assigned'}
             </Text>
-            {error ? (
-              <Text className="text-red-500 text-sm">{error}</Text>
-            ) : stores.length === 0 ? (
-              <Text className="text-gray-500 text-sm">No stores available</Text>
-            ) : (
-              <StoreSelector
-                stores={stores}
-                selectedId={storeId}
-                onSelect={(store) => setStore(store.id, store.name)}
-              />
-            )}
           </View>
 
           {/* Actions */}
           <TouchableOpacity
             className={`rounded-lg py-4 items-center mb-3 ${
-              storeId ? 'bg-blue-500' : 'bg-gray-300'
+              user?.branch_id ? 'bg-blue-500' : 'bg-gray-300'
             }`}
             onPress={() => router.push('/(collector)/products')}
-            disabled={!storeId}
+            disabled={!user?.branch_id}
           >
             <Text className="text-white font-semibold text-base">
-              {storeId ? 'Browse Products' : 'Select a store first'}
+              {user?.branch_id ? 'Browse Products' : 'No branch assigned'}
             </Text>
           </TouchableOpacity>
 

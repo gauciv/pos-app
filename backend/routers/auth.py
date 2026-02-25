@@ -34,16 +34,15 @@ async def activate(body: ActivationRequest):
         supabase.table("profiles")
         .select("email, is_active")
         .eq("id", user_id)
-        .single()
         .execute()
     )
     if not profile.data:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not profile.data["is_active"]:
+    if not profile.data[0]["is_active"]:
         raise HTTPException(status_code=403, detail="Account is deactivated")
 
-    email = profile.data["email"]
+    email = profile.data[0]["email"]
 
     # Generate a magic link token via Supabase admin API
     try:
