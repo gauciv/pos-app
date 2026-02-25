@@ -29,7 +29,7 @@ export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalPro
   async function handleRegenerate() {
     setRegenerating(true);
     try {
-      const result = await apiPost<{ code: string }>(`/users/${user.id}/regenerate-code`, {});
+      await apiPost<{ code: string }>(`/users/${user.id}/regenerate-code`, {});
       // Refetch user detail to get the full activation code object
       const updatedUser = await apiGet<Profile & { activation_code?: ActivationCode | null }>(
         `/users/${user.id}`
