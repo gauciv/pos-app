@@ -3,24 +3,61 @@
 @tailwind utilities;
 
 @media print {
+  @page {
+    size: A5;
+    margin: 0;
+  }
+
+  html, body {
+    width: 148mm;
+    height: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   body * {
     visibility: hidden;
   }
+
   .print-receipt-container,
   .print-receipt-container * {
     display: block !important;
     visibility: visible !important;
   }
+
   #printable-receipt,
   #printable-receipt * {
     visibility: visible;
   }
+
   #printable-receipt {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
   }
+
+  #printable-receipt table {
+    display: table !important;
+  }
+
+  #printable-receipt thead {
+    display: table-header-group !important;
+  }
+
+  #printable-receipt tbody {
+    display: table-row-group !important;
+  }
+
+  #printable-receipt tr {
+    display: table-row !important;
+  }
+
+  #printable-receipt th,
+  #printable-receipt td {
+    display: table-cell !important;
+  }
+
   .print-receipt-container {
     display: block !important;
   }
