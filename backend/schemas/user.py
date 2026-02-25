@@ -2,15 +2,15 @@ from pydantic import BaseModel
 
 
 class UserCreate(BaseModel):
-    email: str
-    full_name: str
-    phone: str | None = None
+    nickname: str
+    branch_id: str
+    tag: str | None = None
 
 
 class UserUpdate(BaseModel):
-    full_name: str | None = None
-    phone: str | None = None
-    is_active: bool | None = None
+    nickname: str | None = None
+    tag: str | None = None
+    branch_id: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -22,6 +22,10 @@ class UserResponse(BaseModel):
     is_active: bool
     device_connected_at: str | None = None
     last_seen_at: str | None = None
+    nickname: str | None = None
+    display_id: str | None = None
+    branch_id: str | None = None
+    tag: str | None = None
     created_at: str
     updated_at: str
 

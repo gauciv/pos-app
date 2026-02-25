@@ -1,24 +1,32 @@
-import { useState } from 'react';
-import { X, Copy, RefreshCw, Check, Wifi, WifiOff } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Copy, RefreshCw, Check, Wifi, WifiOff, Pencil } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { apiPost, apiGet } from '@/lib/api';
+import { apiPost, apiGet, apiPut } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
-import type { Profile, ActivationCode } from '@/types';
+import type { Profile, ActivationCode, Branch } from '@/types';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 
 interface UserDetailModalProps {
   user: Profile & { activation_code?: ActivationCode | null };
+  branches: Branch[];
   onClose: () => void;
   onUpdated: () => void;
 }
 
-export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalProps) {
+export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDetailModalProps) {
   const [activationCode, setActivationCode] = useState<ActivationCode | null>(
     user.activation_code || null
   );
   const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [codeWasRegenerated, setCodeWasRegenerated] = useState(false);
+
+  // Inline editing state
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const isOnline = user.last_seen_at
     ? new Date().getTime() - new Date(user.last_seen_at).getTime() < 5 * 60 * 1000
@@ -26,15 +34,48 @@ export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalPro
 
   const isConnected = !!user.device_connected_at;
 
+  const branchName = user.branch_id
+    ? branches.find((b) => b.id === user.branch_id)?.name || 'Unknown'
+    : 'Unassigned';
+
+  const branchLocation = user.branch_id
+    ? branches.find((b) => b.id === user.branch_id)?.location || null
+    : null;
+
+  function startEditing(field: string, value: string) {
+    setEditingField(field);
+    setEditValue(value);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
+  async function saveField(field: string) {
+    if (!editValue.trim() && field === 'nickname') {
+      toast.error('Nickname cannot be empty');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await apiPut(`/users/${user.id}`, { [field]: editValue.trim() || null });
+      toast.success('Updated');
+      setEditingField(null);
+      onUpdated();
+    } catch {
+      toast.error('Failed to update');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleRegenerate() {
     setRegenerating(true);
     try {
       await apiPost<{ code: string }>(`/users/${user.id}/regenerate-code`, {});
-      // Refetch user detail to get the full activation code object
       const updatedUser = await apiGet<Profile & { activation_code?: ActivationCode | null }>(
         `/users/${user.id}`
       );
       setActivationCode(updatedUser.activation_code || null);
+      setCodeWasRegenerated(true);
       toast.success('Activation code regenerated');
       onUpdated();
     } catch {
@@ -42,6 +83,18 @@ export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalPro
     } finally {
       setRegenerating(false);
     }
+  }
+
+  async function handleClose() {
+    // Invalidate code on close if it was regenerated during this session
+    if (codeWasRegenerated && activationCode && !activationCode.is_used) {
+      try {
+        await apiPost(`/users/${user.id}/invalidate-code`, {});
+      } catch {
+        // Non-critical, don't block close
+      }
+    }
+    onClose();
   }
 
   async function handleCopy() {
@@ -55,43 +108,96 @@ export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalPro
     }
   }
 
+  function EditableField({ label, field, value }: { label: string; field: string; value: string }) {
+    const isEditing = editingField === field;
+
+    return (
+      <div>
+        <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+        {isEditing ? (
+          <div className="flex items-center gap-1.5">
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveField(field);
+                if (e.key === 'Escape') setEditingField(null);
+              }}
+              className="border border-blue-300 rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              disabled={saving}
+            />
+            <button
+              onClick={() => saveField(field)}
+              disabled={saving}
+              className="p-1 text-blue-500 hover:text-blue-700"
+            >
+              <Check size={14} />
+            </button>
+            <button
+              onClick={() => setEditingField(null)}
+              className="p-1 text-gray-400 hover:text-gray-600"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 group">
+            <p className="text-sm font-medium text-gray-800">{value || 'Not set'}</p>
+            <button
+              onClick={() => startEditing(field, value || '')}
+              className="p-0.5 text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Pencil size={12} />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-bold text-gray-800">Collector Details</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <div>
+            <h2 className="text-lg font-bold text-gray-800">Collector Details</h2>
+            {user.display_id && (
+              <p className="text-xs font-mono text-gray-400">{user.display_id}</p>
+            )}
+          </div>
+          <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-4 space-y-4">
-          {/* Basic Info */}
+          {/* Collector Info */}
           <div className="grid grid-cols-2 gap-3">
+            <EditableField label="Nickname" field="nickname" value={user.nickname || user.full_name} />
             <div>
-              <p className="text-xs text-gray-500">Full Name</p>
-              <p className="text-sm font-medium text-gray-800">{user.full_name}</p>
+              <p className="text-xs text-gray-500 mb-0.5">Branch</p>
+              <p className="text-sm font-medium text-gray-800">{branchName}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Email</p>
-              <p className="text-sm text-gray-800">{user.email}</p>
+              <p className="text-xs text-gray-500 mb-0.5">Location</p>
+              <p className="text-sm text-gray-800">{branchLocation || 'Not set'}</p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Phone</p>
-              <p className="text-sm text-gray-800">{user.phone || 'Not set'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Account Status</p>
-              <span
-                className={clsx(
-                  'inline-block px-2 py-0.5 rounded-full text-xs font-medium mt-0.5',
-                  user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                )}
-              >
-                {user.is_active ? 'Active' : 'Inactive'}
-              </span>
-            </div>
+            <EditableField label="Tag" field="tag" value={user.tag || ''} />
+          </div>
+
+          {/* Status */}
+          <div>
+            <span
+              className={clsx(
+                'inline-block px-2 py-0.5 rounded-full text-xs font-medium',
+                user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+              )}
+            >
+              {user.is_active ? 'Active' : 'Inactive'}
+            </span>
           </div>
 
           {/* Connection & Online Status */}
@@ -141,7 +247,6 @@ export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalPro
 
               {activationCode && !activationCode.is_used ? (
                 <>
-                  {/* Code display */}
                   <div className="flex items-center gap-2 mb-3">
                     <code className="bg-gray-100 px-4 py-2 rounded-lg text-2xl font-mono font-bold tracking-widest text-blue-600 flex-1 text-center">
                       {activationCode.code}
@@ -155,7 +260,6 @@ export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalPro
                     </button>
                   </div>
 
-                  {/* QR Code */}
                   <div className="flex justify-center mb-3">
                     <div className="bg-white p-3 border rounded-lg">
                       <QRCodeSVG value={activationCode.code} size={160} />
@@ -165,6 +269,12 @@ export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalPro
                   <p className="text-xs text-gray-400 text-center mb-3">
                     Expires {formatDistanceToNow(new Date(activationCode.expires_at), { addSuffix: true })}
                   </p>
+
+                  {codeWasRegenerated && (
+                    <p className="text-xs text-amber-500 text-center mb-3">
+                      This code will be invalidated when you close this modal
+                    </p>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-gray-500 text-center mb-3">

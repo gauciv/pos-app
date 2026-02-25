@@ -13,6 +13,7 @@ import { ProductsPage } from '@/pages/ProductsPage';
 import { ProductEditPage } from '@/pages/ProductEditPage';
 import { CategoriesPage } from '@/pages/CategoriesPage';
 import { UsersPage } from '@/pages/UsersPage';
+import { BranchesPage } from '@/pages/BranchesPage';
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,6 +50,7 @@ export default function App() {
                     <Route path="/products/:id/edit" element={<ProductEditPage />} />
                     <Route path="/categories" element={<CategoriesPage />} />
                     <Route path="/users" element={<UsersPage />} />
+                    <Route path="/branches" element={<BranchesPage />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </DashboardLayout>

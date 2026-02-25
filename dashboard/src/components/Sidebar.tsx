@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Tag, Users, ChevronsLeft, ChevronsRight, X } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Tag, Users, GitBranch, ChevronsLeft, ChevronsRight, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useSidebar } from '@/contexts/SidebarContext';
 
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/products', label: 'Products', icon: Package },
   { to: '/categories', label: 'Categories', icon: Tag },
   { to: '/users', label: 'Users', icon: Users },
+  { to: '/branches', label: 'Branches', icon: GitBranch },
 ];
 
 export function Sidebar() {

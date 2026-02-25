@@ -56,20 +56,33 @@ async def activate(body: ActivationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to generate activation link")
 
-    # Extract hashed_token from the response
-    hashed_token = link_response.properties.hashed_token
+    # Extract tokens from the response
+    hashed_token = getattr(link_response.properties, 'hashed_token', None)
+    email_otp = getattr(link_response.properties, 'email_otp', None)
 
-    # Mark device as connected
-    supabase.table("profiles").update(
-        {"device_connected_at": datetime.now(timezone.utc).isoformat()}
-    ).eq("id", user_id).execute()
+    if not hashed_token and not email_otp:
+        raise HTTPException(status_code=500, detail="Failed to generate token")
 
-    return {"token_hash": hashed_token, "email": email}
+    return {
+        "token_hash": hashed_token,
+        "email": email,
+        "otp": email_otp,
+        "user_id": user_id,
+    }
 
 
 @router.post("/logout")
 async def logout(user: Annotated[dict, Depends(get_current_user)]):
     return {"message": "Logged out successfully"}
+
+
+@router.post("/mark-connected")
+async def mark_connected(user: Annotated[dict, Depends(get_current_user)]):
+    """Mark device as connected after successful activation."""
+    supabase.table("profiles").update(
+        {"device_connected_at": datetime.now(timezone.utc).isoformat()}
+    ).eq("id", user["id"]).execute()
+    return {"ok": True}
 
 
 @router.get("/me")

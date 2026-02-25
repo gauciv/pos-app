@@ -35,9 +35,9 @@ async def get_user(user_id: str, admin: Annotated[dict, Depends(require_admin)])
 async def create_user(body: UserCreate, admin: Annotated[dict, Depends(require_admin)]):
     try:
         result = user_service.create_user(
-            email=body.email,
-            full_name=body.full_name,
-            phone=body.phone,
+            nickname=body.nickname,
+            branch_id=body.branch_id,
+            tag=body.tag,
         )
         return result
     except Exception as e:
@@ -50,8 +50,11 @@ async def update_user(
     body: UserUpdate,
     admin: Annotated[dict, Depends(require_admin)],
 ):
-    result = user_service.update_user(user_id, body.model_dump())
-    return result
+    try:
+        result = user_service.update_user(user_id, body.model_dump(exclude_none=True))
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.patch("/{user_id}/activate")
@@ -60,8 +63,11 @@ async def toggle_active(
     is_active: bool,
     admin: Annotated[dict, Depends(require_admin)],
 ):
-    result = user_service.toggle_active(user_id, is_active)
-    return result
+    try:
+        result = user_service.toggle_active(user_id, is_active)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/{user_id}/regenerate-code")
@@ -79,5 +85,18 @@ async def regenerate_code(
     try:
         code = activation_service.create_activation_code(user_id)
         return {"code": code}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{user_id}/invalidate-code")
+async def invalidate_code(
+    user_id: str,
+    admin: Annotated[dict, Depends(require_admin)],
+):
+    """Invalidate all unused activation codes for a user."""
+    try:
+        activation_service.invalidate_codes(user_id)
+        return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

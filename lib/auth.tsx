@@ -94,14 +94,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(errorData.detail || 'Activation failed');
     }
 
-    const { token_hash, email } = await response.json();
+    const { token_hash, email, otp, user_id } = await response.json();
 
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash,
-      type: 'magiclink',
-    });
+    // Try token_hash first, fall back to OTP
+    let authError;
+    if (token_hash) {
+      const result = await supabase.auth.verifyOtp({
+        token_hash,
+        type: 'magiclink',
+      });
+      authError = result.error;
+    }
 
-    if (error) throw error;
+    if (authError && otp && email) {
+      const result = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'magiclink',
+      });
+      authError = result.error;
+    }
+
+    if (authError) throw authError;
+
+    // Mark device as connected after successful auth
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (currentSession && user_id) {
+      await fetch(`${API_BASE_URL}/auth/mark-connected`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
+      }).catch(() => {});
+    }
   }
 
   async function signOut() {

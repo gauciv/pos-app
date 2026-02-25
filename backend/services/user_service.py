@@ -3,6 +3,29 @@ import secrets
 from database import supabase
 from services import activation_service
 
+ANIMALS = [
+    "Fox", "Hawk", "Bear", "Wolf", "Lynx", "Orca", "Puma", "Elk",
+    "Owl", "Crow", "Viper", "Falcon", "Tiger", "Eagle", "Shark",
+    "Raven", "Cobra", "Bison", "Moose", "Drake",
+]
+
+
+def generate_display_id(branch_name: str) -> str:
+    prefix = branch_name[:3].upper()
+    for _ in range(20):
+        animal = secrets.choice(ANIMALS)
+        number = secrets.randbelow(900) + 100
+        display_id = f"{prefix}-{animal}-{number}"
+        existing = (
+            supabase.table("profiles")
+            .select("id")
+            .eq("display_id", display_id)
+            .execute()
+        )
+        if not existing.data:
+            return display_id
+    raise Exception("Failed to generate unique display ID")
+
 
 def list_users(role: str | None = None, is_active: bool | None = None) -> list[dict]:
     query = supabase.table("profiles").select("*").order("created_at", desc=True)
@@ -19,8 +42,23 @@ def get_user(user_id: str) -> dict | None:
     return result.data
 
 
-def create_user(email: str, full_name: str, phone: str | None) -> dict:
-    # Generate a random password (collectors never use it directly)
+def create_user(nickname: str, branch_id: str, tag: str | None = None) -> dict:
+    # Verify branch exists
+    branch = (
+        supabase.table("branches")
+        .select("name")
+        .eq("id", branch_id)
+        .single()
+        .execute()
+    )
+    if not branch.data:
+        raise ValueError("Branch not found")
+
+    branch_name = branch.data["name"]
+    display_id = generate_display_id(branch_name)
+
+    # Generate synthetic email and random password (collectors use activation codes)
+    email = f"{display_id.lower().replace('-', '.')}@collector.pos"
     random_password = secrets.token_urlsafe(32)
 
     result = supabase.auth.admin.create_user(
@@ -28,14 +66,21 @@ def create_user(email: str, full_name: str, phone: str | None) -> dict:
             "email": email,
             "password": random_password,
             "email_confirm": True,
-            "user_metadata": {"full_name": full_name, "role": "collector"},
+            "user_metadata": {"full_name": nickname, "role": "collector"},
         }
     )
 
     user_id = str(result.user.id)
 
-    if phone:
-        supabase.table("profiles").update({"phone": phone}).eq("id", user_id).execute()
+    # Update profile with collector-specific fields
+    supabase.table("profiles").update(
+        {
+            "nickname": nickname,
+            "display_id": display_id,
+            "branch_id": branch_id,
+            "tag": tag,
+        }
+    ).eq("id", user_id).execute()
 
     # Auto-generate activation code
     code = activation_service.create_activation_code(user_id)

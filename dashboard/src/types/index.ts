@@ -7,6 +7,10 @@ export interface Profile {
   is_active: boolean;
   device_connected_at: string | null;
   last_seen_at: string | null;
+  nickname: string | null;
+  display_id: string | null;
+  branch_id: string | null;
+  tag: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +23,17 @@ export interface ActivationCode {
   used_at: string | null;
   expires_at: string;
   created_at: string;
+}
+
+export interface Branch {
+  id: string;
+  name: string;
+  location: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  collector_count?: number;
+  last_order_at?: string | null;
 }
 
 export interface Store {

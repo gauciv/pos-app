@@ -92,3 +92,10 @@ def get_activation_code(user_id: str) -> dict | None:
         return None
 
     return activation
+
+
+def invalidate_codes(user_id: str):
+    """Invalidate all unused activation codes for a user."""
+    supabase.table("activation_codes").update(
+        {"is_used": True, "used_at": datetime.now(timezone.utc).isoformat()}
+    ).eq("user_id", user_id).eq("is_used", False).execute()
