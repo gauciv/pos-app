@@ -14,6 +14,7 @@ import { ProductEditPage } from '@/pages/ProductEditPage';
 import { CategoriesPage } from '@/pages/CategoriesPage';
 import { UsersPage } from '@/pages/UsersPage';
 import { BranchesPage } from '@/pages/BranchesPage';
+import { CompanyProfilePage } from '@/pages/CompanyProfilePage';
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -51,6 +52,7 @@ export default function App() {
                     <Route path="/categories" element={<CategoriesPage />} />
                     <Route path="/users" element={<UsersPage />} />
                     <Route path="/branches" element={<BranchesPage />} />
+                    <Route path="/company" element={<CompanyProfilePage />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </DashboardLayout>
