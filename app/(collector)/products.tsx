@@ -7,7 +7,7 @@ import {
   TextInput,
   Modal,
   Image,
-  Alert,
+  RefreshControl,
   useWindowDimensions,
   Platform,
 } from 'react-native';
@@ -20,7 +20,7 @@ import { formatCurrency, formatShortDate } from '@/lib/formatters';
 import type { Product } from '@/types';
 
 export default function ProductsScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const {
     products,
     categories,
@@ -30,6 +30,8 @@ export default function ProductsScreen() {
     setSearch,
     categoryFilter,
     setCategoryFilter,
+    refreshing,
+    refresh,
   } = useProducts();
   const { addItem, updateQuantity, items, getItemCount } = useCart();
   const cartCount = getItemCount();
@@ -78,23 +80,6 @@ export default function ProductsScreen() {
     closeModal();
   }
 
-  function handleLogout() {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch {
-            // Auth provider handles cleanup
-          }
-        },
-      },
-    ]);
-  }
-
   const today = formatShortDate(new Date().toISOString());
 
   return (
@@ -112,6 +97,12 @@ export default function ProductsScreen() {
             <Text className="text-xs text-gray-400 mt-0.5">{today}</Text>
           </View>
           <View className="flex-row items-center gap-3">
+            {/* Order History button */}
+            <TouchableOpacity
+              onPress={() => router.push('/(collector)/orders')}
+            >
+              <Ionicons name="receipt-outline" size={22} color="#374151" />
+            </TouchableOpacity>
             {/* Cart button */}
             <TouchableOpacity
               className="relative"
@@ -124,9 +115,9 @@ export default function ProductsScreen() {
                 </View>
               )}
             </TouchableOpacity>
-            {/* Logout button */}
-            <TouchableOpacity onPress={handleLogout}>
-              <Ionicons name="power-outline" size={22} color="#9ca3af" />
+            {/* Profile button */}
+            <TouchableOpacity onPress={() => router.push('/(collector)/settings')}>
+              <Ionicons name="person-circle-outline" size={24} color="#9ca3af" />
             </TouchableOpacity>
           </View>
         </View>
@@ -206,6 +197,9 @@ export default function ProductsScreen() {
           numColumns={numColumns}
           contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
           columnWrapperStyle={numColumns > 1 ? { gap: 10 } : undefined}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={refresh} />
+          }
           renderItem={({ item }) => {
             const isOutOfStock = item.stock_quantity <= 0;
             const isLowStock = item.stock_quantity > 0 && item.stock_quantity < 10;
