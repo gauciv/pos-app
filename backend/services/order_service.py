@@ -57,7 +57,7 @@ def list_orders(
     page_size: int = 50,
 ) -> dict:
     query = supabase.table("orders").select(
-        "*, profiles!orders_collector_id_fkey(full_name, email), stores(name)",
+        "*, order_items(*), profiles!orders_collector_id_fkey(full_name, email), stores(name)",
         count="exact",
     )
 
