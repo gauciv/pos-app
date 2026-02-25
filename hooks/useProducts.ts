@@ -10,9 +10,10 @@ export function useProducts() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const result = await getProducts({
@@ -24,9 +25,15 @@ export function useProducts() {
     } catch (err: any) {
       setError(err.message || 'Failed to load products');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [search, categoryFilter]);
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchProducts(true);
+    setRefreshing(false);
+  }, [fetchProducts]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -79,5 +86,7 @@ export function useProducts() {
     categoryFilter,
     setCategoryFilter,
     refetch: fetchProducts,
+    refreshing,
+    refresh,
   };
 }
