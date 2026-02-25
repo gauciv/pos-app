@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
 from config import settings
-from routers import auth, products, categories, orders, stores, users, inventory, branches
+from routers import auth, products, categories, orders, stores, users, inventory, branches, company
 
 app = FastAPI(
     title="POS App API",
@@ -45,6 +45,7 @@ app.include_router(orders.router, prefix="/api/v1/orders", tags=["Orders"])
 app.include_router(stores.router, prefix="/api/v1/stores", tags=["Stores"])
 app.include_router(inventory.router, prefix="/api/v1/inventory", tags=["Inventory"])
 app.include_router(branches.router, prefix="/api/v1/branches", tags=["Branches"])
+app.include_router(company.router, prefix="/api/v1/company-profile", tags=["Company"])
 
 
 @app.get("/api/v1/health")
