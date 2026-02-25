@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, MapPin, Users, Clock } from 'lucide-react';
-import { apiGet, apiPost, apiPut } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 import { SkeletonTable, EmptyState } from '@/components/Skeleton';
 import type { Branch } from '@/types';
 import toast from 'react-hot-toast';
@@ -11,6 +11,8 @@ export function BranchesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Branch | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
 
   // Form state
   const [name, setName] = useState('');
@@ -78,6 +80,23 @@ export function BranchesPage() {
     setLocation(branch.location || '');
     setEditingId(branch.id);
     setShowForm(true);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    if (deleteConfirmName !== deleteTarget.name) {
+      toast.error('Name does not match. Please type the exact branch name.');
+      return;
+    }
+    try {
+      await apiDelete(`/branches/${deleteTarget.id}`);
+      toast.success('Branch deleted');
+      await fetchBranches();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete branch');
+    }
+    setDeleteTarget(null);
+    setDeleteConfirmName('');
   }
 
   return (
@@ -188,12 +207,27 @@ export function BranchesPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleEdit(branch)}
-                      className="text-sm text-blue-500 hover:text-blue-700"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(branch)}
+                        className="text-sm text-blue-500 hover:text-blue-700"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          if ((branch.collector_count ?? 0) > 0) {
+                            toast.error(`Cannot delete "${branch.name}" — it has ${branch.collector_count} collector(s). Remove them first.`);
+                            return;
+                          }
+                          setDeleteTarget(branch);
+                          setDeleteConfirmName('');
+                        }}
+                        className="text-sm text-red-500 hover:text-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -201,6 +235,40 @@ export function BranchesPage() {
           </table>
         )}
       </div>
+
+      {/* Delete confirmation with name entry */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Delete Branch</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              This action is permanent. To confirm, type the branch name: <strong>{deleteTarget.name}</strong>
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmName}
+              onChange={(e) => setDeleteConfirmName(e.target.value)}
+              placeholder="Type branch name to confirm"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4"
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setDeleteTarget(null); setDeleteConfirmName(''); }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteConfirmName !== deleteTarget.name}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

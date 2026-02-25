@@ -75,3 +75,21 @@ def update_branch(branch_id: str, data: dict) -> dict:
         .execute()
     )
     return result.data
+
+
+def delete_branch(branch_id: str):
+    """Delete a branch. Raises if it still has collectors."""
+    count_result = (
+        supabase.table("profiles")
+        .select("id", count="exact")
+        .eq("branch_id", branch_id)
+        .eq("role", "collector")
+        .execute()
+    )
+    if (count_result.count or 0) > 0:
+        raise ValueError(
+            f"Cannot delete branch with {count_result.count} collector(s). "
+            "Remove all collectors from this branch first."
+        )
+
+    supabase.table("branches").delete().eq("id", branch_id).execute()

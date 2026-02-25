@@ -113,3 +113,8 @@ def toggle_active(user_id: str, is_active: bool) -> dict:
         .execute()
     )
     return result.data
+
+
+def delete_user(user_id: str):
+    """Delete a user completely from auth and profiles (cascade)."""
+    supabase.auth.admin.delete_user(user_id)

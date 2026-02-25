@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Wifi, WifiOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet, apiPost, apiPatch } from '@/lib/api';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 import { UserDetailModal } from '@/components/UserDetailModal';
 import { SkeletonTable, EmptyState } from '@/components/Skeleton';
 import type { Profile, ActivationCode, Branch } from '@/types';
@@ -17,7 +16,9 @@ export function UsersPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [toggleTarget, setToggleTarget] = useState<Profile | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<Profile | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserWithCode | null>(null);
 
   // Form state
@@ -82,16 +83,44 @@ export function UsersPage() {
     }
   }
 
-  async function handleToggleActive() {
-    if (!toggleTarget) return;
+  async function handleDeactivate() {
+    if (!deactivateTarget) return;
     try {
-      await apiPatch(`/users/${toggleTarget.id}/activate?is_active=${!toggleTarget.is_active}`, {});
-      toast.success(toggleTarget.is_active ? 'User deactivated' : 'User activated');
+      await apiPatch(`/users/${deactivateTarget.id}/activate?is_active=false`, {});
+      toast.success('User deactivated');
       await fetchUsers();
     } catch {
-      toast.error('Failed to update user');
+      toast.error('Failed to deactivate user');
     }
-    setToggleTarget(null);
+    setDeactivateTarget(null);
+  }
+
+  async function handleActivate(user: Profile) {
+    try {
+      await apiPatch(`/users/${user.id}/activate?is_active=true`, {});
+      toast.success('User activated');
+      await fetchUsers();
+    } catch {
+      toast.error('Failed to activate user');
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    const expectedName = deleteTarget.nickname || deleteTarget.full_name;
+    if (deleteConfirmName !== expectedName) {
+      toast.error('Name does not match. Please type the exact collector name.');
+      return;
+    }
+    try {
+      await apiDelete(`/users/${deleteTarget.id}`);
+      toast.success('Collector deleted');
+      await fetchUsers();
+    } catch {
+      toast.error('Failed to delete collector');
+    }
+    setDeleteTarget(null);
+    setDeleteConfirmName('');
   }
 
   async function handleRowClick(user: Profile) {
@@ -116,9 +145,9 @@ export function UsersPage() {
     return new Date().getTime() - new Date(user.last_seen_at).getTime() < 5 * 60 * 1000;
   }
 
-  function getBranchName(branchId: string | null) {
-    if (!branchId) return null;
-    return branches.find((b) => b.id === branchId)?.name || null;
+  function getBranchName(id: string | null) {
+    if (!id) return null;
+    return branches.find((b) => b.id === id)?.name || null;
   }
 
   return (
@@ -266,12 +295,31 @@ export function UsersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setToggleTarget(user); }}
-                      className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      {user.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
+                    <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      {user.is_active ? (
+                        <button
+                          onClick={() => setDeactivateTarget(user)}
+                          className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          Deactivate
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleActivate(user)}
+                            className="text-sm text-blue-500 hover:text-blue-700"
+                          >
+                            Activate
+                          </button>
+                          <button
+                            onClick={() => { setDeleteTarget(user); setDeleteConfirmName(''); }}
+                            className="text-sm text-red-500 hover:text-red-700"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -280,14 +328,66 @@ export function UsersPage() {
         )}
       </div>
 
-      {toggleTarget && (
-        <ConfirmDialog
-          title={toggleTarget.is_active ? 'Deactivate User' : 'Activate User'}
-          message={`Are you sure you want to ${toggleTarget.is_active ? 'deactivate' : 'activate'} "${toggleTarget.nickname || toggleTarget.full_name}"?`}
-          confirmLabel={toggleTarget.is_active ? 'Deactivate' : 'Activate'}
-          onConfirm={handleToggleActive}
-          onCancel={() => setToggleTarget(null)}
-        />
+      {/* Deactivate confirmation */}
+      {deactivateTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Deactivate User</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Are you sure you want to deactivate "{deactivateTarget.nickname || deactivateTarget.full_name}"?
+              They will be logged out of the mobile app and unable to sign in.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeactivateTarget(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeactivate}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600"
+              >
+                Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation with name entry */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Delete Collector</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              This action is permanent and cannot be undone. To confirm, type the
+              collector's name: <strong>{deleteTarget.nickname || deleteTarget.full_name}</strong>
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmName}
+              onChange={(e) => setDeleteConfirmName(e.target.value)}
+              placeholder="Type collector name to confirm"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4"
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setDeleteTarget(null); setDeleteConfirmName(''); }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteConfirmName !== (deleteTarget.nickname || deleteTarget.full_name)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedUser && (

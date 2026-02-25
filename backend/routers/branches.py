@@ -46,3 +46,22 @@ async def update_branch(
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/{branch_id}")
+async def delete_branch(
+    branch_id: str,
+    admin: Annotated[dict, Depends(require_admin)],
+):
+    """Delete a branch. Fails if it still has collectors."""
+    existing = branch_service.get_branch(branch_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Branch not found")
+
+    try:
+        branch_service.delete_branch(branch_id)
+        return {"ok": True}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -38,6 +38,13 @@ def get_current_user(
             detail="User not found",
         )
 
+    # Reject deactivated accounts
+    if not result.data.get("is_active", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated",
+        )
+
     # Update last_seen_at for online status tracking
     try:
         supabase.table("profiles").update(

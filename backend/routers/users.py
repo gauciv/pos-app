@@ -100,3 +100,22 @@ async def invalidate_code(
         return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{user_id}")
+async def delete_user(
+    user_id: str,
+    admin: Annotated[dict, Depends(require_admin)],
+):
+    """Permanently delete a collector account."""
+    user = user_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user["role"] != "collector":
+        raise HTTPException(status_code=400, detail="Can only delete collector accounts")
+
+    try:
+        user_service.delete_user(user_id)
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
