@@ -1,4 +1,7 @@
+import secrets
+
 from database import supabase
+from services import activation_service
 
 
 def list_users(role: str | None = None, is_active: bool | None = None) -> list[dict]:
@@ -16,19 +19,30 @@ def get_user(user_id: str) -> dict | None:
     return result.data
 
 
-def create_user(email: str, password: str, full_name: str, role: str, phone: str | None) -> dict:
+def create_user(email: str, full_name: str, phone: str | None) -> dict:
+    # Generate a random password (collectors never use it directly)
+    random_password = secrets.token_urlsafe(32)
+
     result = supabase.auth.admin.create_user(
         {
             "email": email,
-            "password": password,
+            "password": random_password,
             "email_confirm": True,
-            "user_metadata": {"full_name": full_name, "role": role},
+            "user_metadata": {"full_name": full_name, "role": "collector"},
         }
     )
+
+    user_id = str(result.user.id)
+
     if phone:
-        supabase.table("profiles").update({"phone": phone}).eq("id", result.user.id).execute()
-    profile = supabase.table("profiles").select("*").eq("id", result.user.id).single().execute()
-    return profile.data
+        supabase.table("profiles").update({"phone": phone}).eq("id", user_id).execute()
+
+    # Auto-generate activation code
+    code = activation_service.create_activation_code(user_id)
+
+    profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+
+    return {**profile.data, "activation_code": code}
 
 
 def update_user(user_id: str, data: dict) -> dict:

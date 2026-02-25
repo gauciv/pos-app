@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { API_BASE_URL } from './constants';
 import type { AuthUser } from '@/types';
 
 interface AuthContextType {
@@ -8,8 +9,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  activate: (code: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -18,8 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   isLoading: true,
   isAuthenticated: false,
-  signIn: async () => {},
-  signUp: async () => {},
+  activate: async () => {},
   signOut: async () => {},
 });
 
@@ -83,19 +82,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }
 
-  async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-  }
-
-  async function signUp(email: string, password: string, fullName: string) {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, role: 'collector' },
-      },
+  async function activate(code: string) {
+    const response = await fetch(`${API_BASE_URL}/auth/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code.toUpperCase().trim() }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Activation failed');
+    }
+
+    const { token_hash, email } = await response.json();
+
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: 'magiclink',
+    });
+
     if (error) throw error;
   }
 
@@ -113,8 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         isLoading,
         isAuthenticated: !!user && !!session,
-        signIn,
-        signUp,
+        activate,
         signOut,
       }}
     >

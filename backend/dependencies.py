@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -36,6 +37,14 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
+
+    # Update last_seen_at for online status tracking
+    try:
+        supabase.table("profiles").update(
+            {"last_seen_at": datetime.now(timezone.utc).isoformat()}
+        ).eq("id", user_id).execute()
+    except Exception:
+        pass  # Non-critical, don't fail the request
 
     return result.data
 

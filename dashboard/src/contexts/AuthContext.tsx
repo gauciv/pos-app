@@ -9,7 +9,6 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -19,7 +18,6 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   isAuthenticated: false,
   signIn: async () => {},
-  signUp: async () => {},
   signOut: async () => {},
 });
 
@@ -82,18 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }
 
-  async function signUp(email: string, password: string, fullName: string) {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, role: 'admin' },
-        emailRedirectTo: `${window.location.origin}/verify-email`,
-      },
-    });
-    if (error) throw error;
-  }
-
   async function signOut() {
     await supabase.auth.signOut();
     setUser(null);
@@ -108,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user && !!session,
         signIn,
-        signUp,
         signOut,
       }}
     >

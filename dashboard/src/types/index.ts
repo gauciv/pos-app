@@ -5,8 +5,20 @@ export interface Profile {
   role: 'collector' | 'admin';
   phone: string | null;
   is_active: boolean;
+  device_connected_at: string | null;
+  last_seen_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ActivationCode {
+  id: string;
+  user_id: string;
+  code: string;
+  is_used: boolean;
+  used_at: string | null;
+  expires_at: string;
+  created_at: string;
 }
 
 export interface Store {

@@ -13,6 +13,8 @@ create table public.profiles (
   role text not null default 'collector' check (role in ('collector', 'admin')),
   phone text,
   is_active boolean not null default true,
+  device_connected_at timestamptz,
+  last_seen_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -113,24 +115,13 @@ create index idx_inventory_logs_product on public.inventory_logs(product_id);
 -- Auto-create profile on user signup
 create or replace function public.handle_new_user()
 returns trigger as $$
-declare
-  v_role text := 'collector';
-  v_admin_count integer;
 begin
-  -- Bootstrap: allow first admin signup only when no admins exist yet
-  if coalesce(new.raw_user_meta_data->>'role', '') = 'admin' then
-    select count(*) into v_admin_count from public.profiles where role = 'admin';
-    if v_admin_count = 0 then
-      v_role := 'admin';
-    end if;
-  end if;
-
   insert into public.profiles (id, email, full_name, role)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', new.email),
-    v_role
+    coalesce(new.raw_user_meta_data->>'role', 'collector')
   );
   return new;
 end;
@@ -364,7 +355,26 @@ create policy "Admins can read inventory logs"
   using (public.is_admin());
 
 -- ============================================
--- 6. Enable Realtime
+-- 6. Activation codes table
+-- ============================================
+
+create table public.activation_codes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  code text not null unique,
+  is_used boolean not null default false,
+  used_at timestamptz,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create index idx_activation_codes_code on public.activation_codes(code);
+create index idx_activation_codes_user_id on public.activation_codes(user_id);
+
+alter table public.activation_codes enable row level security;
+
+-- ============================================
+-- 7. Enable Realtime
 -- ============================================
 
 alter publication supabase_realtime add table public.orders;

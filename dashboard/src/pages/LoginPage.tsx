@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -84,13 +84,6 @@ export function LoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <p className="text-sm text-gray-500 text-center mt-4">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-blue-500 hover:text-blue-600 font-medium">
-            Create Account
-          </Link>
-        </p>
       </div>
     </div>
   );
