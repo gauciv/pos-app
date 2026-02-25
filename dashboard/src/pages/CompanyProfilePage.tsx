@@ -3,15 +3,22 @@ import { Pencil, Check, X, Building2, Loader2 } from 'lucide-react';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import toast from 'react-hot-toast';
 
-const fields = [
+interface FieldDef {
+  key: 'company_name' | 'address' | 'contact_phone' | 'contact_email' | 'receipt_footer';
+  label: string;
+  placeholder: string;
+  multiline?: boolean;
+}
+
+const fields: FieldDef[] = [
   { key: 'company_name', label: 'Company Name', placeholder: 'Enter company name' },
   { key: 'address', label: 'Address', placeholder: 'Enter company address' },
   { key: 'contact_phone', label: 'Contact Phone', placeholder: 'Enter phone number' },
   { key: 'contact_email', label: 'Contact Email', placeholder: 'Enter email address' },
   { key: 'receipt_footer', label: 'Receipt Footer / Terms', placeholder: 'Enter receipt footer text or terms', multiline: true },
-] as const;
+];
 
-type FieldKey = (typeof fields)[number]['key'];
+type FieldKey = FieldDef['key'];
 
 export function CompanyProfilePage() {
   const { profile, loading, error, updateProfile } = useCompanyProfile();
