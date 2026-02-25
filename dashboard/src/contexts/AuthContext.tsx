@@ -88,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { full_name: fullName, role: 'admin' },
+        emailRedirectTo: `${window.location.origin}/verify-email`,
       },
     });
     if (error) throw error;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/lib/cart';
@@ -21,6 +21,8 @@ export default function ProductsScreen() {
   } = useProducts();
   const { addItem, items, getItemCount } = useCart();
   const cartCount = getItemCount();
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
 
   function getCartQuantity(productId: string): number {
     const item = items.find((i) => i.product_id === productId);
@@ -76,22 +78,27 @@ export default function ProductsScreen() {
         <EmptyState title="No products found" message="Try adjusting your search or filter" />
       ) : (
         <FlatList
+          key={`products-${numColumns}`}
           data={products}
           keyExtractor={(item) => item.id}
+          numColumns={numColumns}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          columnWrapperStyle={numColumns > 1 ? { gap: 12 } : undefined}
           renderItem={({ item }) => (
-            <ProductCard
-              product={item}
-              onAdd={(product) =>
-                addItem({
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  stock_quantity: product.stock_quantity,
-                })
-              }
-              cartQuantity={getCartQuantity(item.id)}
-            />
+            <View style={numColumns > 1 ? { flex: 1 } : undefined}>
+              <ProductCard
+                product={item}
+                onAdd={(product) =>
+                  addItem({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    stock_quantity: product.stock_quantity,
+                  })
+                }
+                cartQuantity={getCartQuantity(item.id)}
+              />
+            </View>
           )}
         />
       )}

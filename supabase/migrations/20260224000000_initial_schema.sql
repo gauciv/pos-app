@@ -113,13 +113,24 @@ create index idx_inventory_logs_product on public.inventory_logs(product_id);
 -- Auto-create profile on user signup
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  v_role text := 'collector';
+  v_admin_count integer;
 begin
+  -- Bootstrap: allow first admin signup only when no admins exist yet
+  if coalesce(new.raw_user_meta_data->>'role', '') = 'admin' then
+    select count(*) into v_admin_count from public.profiles where role = 'admin';
+    if v_admin_count = 0 then
+      v_role := 'admin';
+    end if;
+  end if;
+
   insert into public.profiles (id, email, full_name, role)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', new.email),
-    coalesce(new.raw_user_meta_data->>'role', 'collector')
+    v_role
   );
   return new;
 end;

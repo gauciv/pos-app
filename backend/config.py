@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     supabase_url: str
     supabase_service_role_key: str
-    supabase_jwt_secret: str
+    supabase_jwt_secret: str = ""  # No longer required - auth uses Supabase API
     cors_origins: str = "http://localhost:5173,http://localhost:8081"
 
     @property

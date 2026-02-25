@@ -2,37 +2,34 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 
-from config import settings
 from database import supabase
 
 security = HTTPBearer()
 
 
-async def get_current_user(
+def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> dict:
     token = credentials.credentials
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        # Validate token via Supabase Auth API (no JWT secret needed)
+        response = supabase.auth.get_user(token)
+        if not response or not response.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: missing subject",
+                detail="Invalid or expired token",
             )
-    except JWTError:
+        user_id = str(response.user.id)
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         )
 
+    # Fetch profile using service role client (bypasses RLS)
     result = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
     if not result.data:
         raise HTTPException(
@@ -43,7 +40,7 @@ async def get_current_user(
     return result.data
 
 
-async def require_admin(
+def require_admin(
     user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
     if user.get("role") != "admin":
@@ -54,7 +51,7 @@ async def require_admin(
     return user
 
 
-async def require_collector(
+def require_collector(
     user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
     if user.get("role") != "collector":
