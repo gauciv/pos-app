@@ -26,7 +26,7 @@ export default function ActivationScreen() {
   // Navigate to home once authenticated (after activation completes)
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/(collector)/home');
+      router.replace('/(collector)/products');
     }
   }, [isAuthenticated]);
 
