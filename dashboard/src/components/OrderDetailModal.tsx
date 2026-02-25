@@ -118,8 +118,8 @@ export function OrderDetailModal({ order, onClose, onStatusChange }: OrderDetail
           </div>
         </div>
 
-        {/* Hidden printable receipt */}
-        <div className="hidden">
+        {/* Hidden printable receipt - visible only in print */}
+        <div className="print-receipt-container hidden">
           <PrintableReceipt order={order} />
         </div>
       </div>

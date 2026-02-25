@@ -6,6 +6,11 @@
   body * {
     visibility: hidden;
   }
+  .print-receipt-container,
+  .print-receipt-container * {
+    display: block !important;
+    visibility: visible !important;
+  }
   #printable-receipt,
   #printable-receipt * {
     visibility: visible;
@@ -15,5 +20,8 @@
     left: 0;
     top: 0;
     width: 100%;
+  }
+  .print-receipt-container {
+    display: block !important;
   }
 }

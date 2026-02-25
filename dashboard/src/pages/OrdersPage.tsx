@@ -140,7 +140,7 @@ export function OrdersPage() {
 
       {/* Hidden auto-print receipt */}
       {autoPrintOrder && (
-        <div className="hidden">
+        <div className="print-receipt-container hidden">
           <PrintableReceipt order={autoPrintOrder} />
         </div>
       )}
