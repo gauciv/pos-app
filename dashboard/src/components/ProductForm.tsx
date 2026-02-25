@@ -1,5 +1,8 @@
-import { useState, FormEvent } from 'react';
+import { useState, useRef, FormEvent } from 'react';
+import { Upload, X } from 'lucide-react';
+import { apiUpload } from '@/lib/api';
 import type { Product, Category } from '@/types';
+import toast from 'react-hot-toast';
 
 interface ProductFormProps {
   product?: Product;
@@ -16,8 +19,36 @@ export function ProductForm({ product, categories, onSubmit, onCancel }: Product
   const [price, setPrice] = useState(product?.price?.toString() || '');
   const [stockQuantity, setStockQuantity] = useState(product?.stock_quantity?.toString() || '0');
   const [unit, setUnit] = useState(product?.unit || 'unit');
+  const [imageUrl, setImageUrl] = useState(product?.image_url || '');
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImageUpload(file: File) {
+    setUploading(true);
+    try {
+      const result = await apiUpload<{ image_url: string }>('/products/upload-image', file);
+      setImageUrl(result.image_url);
+      toast.success('Image uploaded');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleImageUpload(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) handleImageUpload(file);
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -38,6 +69,7 @@ export function ProductForm({ product, categories, onSubmit, onCancel }: Product
         price: parseFloat(price),
         stock_quantity: parseInt(stockQuantity, 10) || 0,
         unit: unit.trim(),
+        image_url: imageUrl || null,
       } as Partial<Product>);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save product');
@@ -53,6 +85,50 @@ export function ProductForm({ product, categories, onSubmit, onCancel }: Product
           {error}
         </div>
       )}
+
+      {/* Image Upload */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+        {imageUrl ? (
+          <div className="relative inline-block">
+            <img
+              src={imageUrl}
+              alt="Product"
+              className="w-40 h-40 object-cover rounded-lg border border-gray-200"
+            />
+            <button
+              type="button"
+              onClick={() => setImageUrl('')}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className="w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+          >
+            {uploading ? (
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
+            ) : (
+              <>
+                <Upload size={24} className="text-gray-400 mb-2" />
+                <span className="text-xs text-gray-500">Click or drag</span>
+              </>
+            )}
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>

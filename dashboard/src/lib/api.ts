@@ -77,3 +77,20 @@ export async function apiDelete<T>(path: string): Promise<T> {
   }
   return res.json();
 }
+
+export async function apiUpload<T>(path: string, file: File): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Not authenticated');
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${session.access_token}` },
+    body: formData,
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(error.detail || 'Upload failed');
+  }
+  return res.json();
+}
