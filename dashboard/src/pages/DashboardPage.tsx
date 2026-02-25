@@ -4,7 +4,7 @@ import { OrderCard } from '@/components/OrderCard';
 import { SkeletonStats, SkeletonCard, EmptyState, ErrorState } from '@/components/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@/lib/formatters';
-import { UserPlus, ClipboardList } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 
 export function DashboardPage() {
   const { orders, loading, error, refetch } = useRealtimeOrders();
@@ -31,24 +31,15 @@ export function DashboardPage() {
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold text-gray-800">Dashboard</h1>
-        <div className="flex gap-2">
+        {orders.length > 0 && (
           <button
-            onClick={() => navigate('/users')}
-            className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50"
+            onClick={() => navigate(`/orders/${orders[0].id}`)}
+            className="flex items-center gap-1.5 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-600"
           >
-            <UserPlus size={14} />
-            Add Collector
+            <ClipboardList size={14} />
+            Latest Order
           </button>
-          {orders.length > 0 && (
-            <button
-              onClick={() => navigate(`/orders/${orders[0].id}`)}
-              className="flex items-center gap-1.5 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-600"
-            >
-              <ClipboardList size={14} />
-              Latest Order
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {loading ? (

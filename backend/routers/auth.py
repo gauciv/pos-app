@@ -84,6 +84,15 @@ async def mark_connected(user: Annotated[dict, Depends(get_current_user)]):
     return {"ok": True}
 
 
+@router.post("/mark-disconnected")
+async def mark_disconnected(user: Annotated[dict, Depends(get_current_user)]):
+    """Clear device connection status on sign out."""
+    supabase.table("profiles").update(
+        {"device_connected_at": None, "last_seen_at": None}
+    ).eq("id", user["id"]).execute()
+    return {"ok": True}
+
+
 @router.get("/me")
 async def get_me(user: Annotated[dict, Depends(get_current_user)]):
     return user

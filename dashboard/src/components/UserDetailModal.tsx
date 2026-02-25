@@ -264,10 +264,6 @@ export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDeta
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-400 text-center mb-3">
-                    Expires {formatDistanceToNow(new Date(activationCode.expires_at), { addSuffix: true })}
-                  </p>
-
                   <p className="text-xs text-amber-500 text-center mb-3">
                     This code will be invalidated the moment this modal is closed
                   </p>

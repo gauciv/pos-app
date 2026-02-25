@@ -29,15 +29,14 @@ def get_product(product_id: str) -> dict | None:
         supabase.table("products")
         .select("*, categories(name)")
         .eq("id", product_id)
-        .single()
         .execute()
     )
-    return result.data
+    return result.data[0] if result.data else None
 
 
 def create_product(data: dict) -> dict:
-    result = supabase.table("products").insert(data).single().execute()
-    return result.data
+    result = supabase.table("products").insert(data).execute()
+    return result.data[0]
 
 
 def update_product(product_id: str, data: dict) -> dict:
@@ -46,10 +45,11 @@ def update_product(product_id: str, data: dict) -> dict:
         supabase.table("products")
         .update(update_data)
         .eq("id", product_id)
-        .single()
         .execute()
     )
-    return result.data
+    if not result.data:
+        raise ValueError("Product not found")
+    return result.data[0]
 
 
 def delete_product(product_id: str) -> dict:
@@ -57,7 +57,8 @@ def delete_product(product_id: str) -> dict:
         supabase.table("products")
         .update({"is_active": False})
         .eq("id", product_id)
-        .single()
         .execute()
     )
-    return result.data
+    if not result.data:
+        raise ValueError("Product not found")
+    return result.data[0]

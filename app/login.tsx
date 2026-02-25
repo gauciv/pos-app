@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 
 export default function ActivationScreen() {
-  const { activate } = useAuth();
+  const { activate, isAuthenticated } = useAuth();
   const router = useRouter();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -22,6 +22,13 @@ export default function ActivationScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const inputRef = useRef<TextInput>(null);
+
+  // Navigate to home once authenticated (after activation completes)
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/(collector)/home');
+    }
+  }, [isAuthenticated]);
 
   const VALID_CHARS = '23456789ACDEFGHJKMNPQRSTUVWXYZ';
 
@@ -46,9 +53,9 @@ export default function ActivationScreen() {
 
     try {
       await activate(trimmed);
+      // Keep loading=true — the useEffect above will navigate once isAuthenticated flips
     } catch (err: any) {
       setError(err.message || 'Activation failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   }

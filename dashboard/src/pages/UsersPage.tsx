@@ -51,6 +51,12 @@ export function UsersPage() {
   useEffect(() => {
     fetchUsers();
     fetchBranches();
+
+    // Poll for status updates every 15 seconds
+    const interval = setInterval(() => {
+      fetchUsers();
+    }, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   async function handleCreateUser() {

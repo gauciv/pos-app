@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 
 export default function ScanScreen() {
-  const { activate } = useAuth();
+  const { activate, isAuthenticated } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -27,6 +27,13 @@ export default function ScanScreen() {
       setHasPermission(status === 'granted');
     });
   }, []);
+
+  // Navigate to home once authenticated (after activation completes)
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/(collector)/home');
+    }
+  }, [isAuthenticated]);
 
   async function handleRequestPermission() {
     const { status } = await Camera.requestCameraPermissionsAsync();
@@ -54,10 +61,10 @@ export default function ScanScreen() {
 
     try {
       await activate(trimmed);
+      // Keep loading=true — the useEffect above will navigate once isAuthenticated flips
     } catch (err: any) {
       setError(err.message || 'Activation failed. Please try again.');
       setScanned(false);
-    } finally {
       setLoading(false);
     }
   }

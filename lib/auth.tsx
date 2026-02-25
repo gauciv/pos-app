@@ -58,9 +58,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from('profiles')
           .select('*, branches:branch_id(name)')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
+
+        // Profile not found (user was deleted) - sign out
+        if (!data) {
+          console.warn('Profile not found for user, signing out');
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setIsLoading(false);
+          return;
+        }
 
         setUser({
           id: data.id,
@@ -77,7 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (i < retries - 1) {
           await new Promise((r) => setTimeout(r, 1000));
         } else {
+          // All retries exhausted - sign out to avoid stuck state
+          await supabase.auth.signOut().catch(() => {});
           setUser(null);
+          setSession(null);
         }
       }
     }
@@ -136,6 +149,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
+    // Mark device as disconnected before signing out
+    if (session?.access_token) {
+      await fetch(`${API_BASE_URL}/auth/mark-disconnected`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      }).catch(() => {});
+    }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setUser(null);
