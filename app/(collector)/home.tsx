@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
 import { useStores } from '@/hooks/useStores';
@@ -9,7 +10,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { formatShortDate } from '@/lib/formatters';
 
 export default function HomeScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { storeId, setStore, getItemCount } = useCart();
   const { stores, loading, error } = useStores();
   const cartCount = getItemCount();
@@ -35,10 +36,10 @@ export default function HomeScreen() {
               </Text>
             </View>
             <TouchableOpacity
-              className="bg-gray-200 px-3 py-2 rounded-lg"
-              onPress={signOut}
+              className="bg-gray-100 p-2.5 rounded-lg"
+              onPress={() => router.push('/(collector)/settings')}
             >
-              <Text className="text-gray-700 text-sm">Logout</Text>
+              <Ionicons name="settings-outline" size={20} color="#6b7280" />
             </TouchableOpacity>
           </View>
 

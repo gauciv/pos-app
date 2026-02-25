@@ -27,7 +27,7 @@ export function UsersPage() {
   async function fetchUsers() {
     try {
       const data = await apiGet<Profile[]>('/users');
-      setUsers(data);
+      setUsers(data.filter((u) => u.role === 'collector'));
     } catch {
       toast.error('Failed to load users');
     } finally {
@@ -156,7 +156,6 @@ export function UsersPage() {
               <tr className="border-b bg-gray-50 text-left text-gray-500">
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Connected</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -175,17 +174,8 @@ export function UsersPage() {
                   <td className="px-4 py-3 font-medium text-gray-800">{user.full_name}</td>
                   <td className="px-4 py-3 text-gray-600">{user.email}</td>
                   <td className="px-4 py-3">
-                    <span className={clsx(
-                      'px-2 py-0.5 rounded-full text-xs font-medium',
-                      user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                    )}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.role === 'collector' ? (
-                      <div className="flex items-center gap-1.5">
-                        {user.device_connected_at ? (
+                    <div className="flex items-center gap-1.5">
+                      {user.device_connected_at ? (
                           <>
                             {isOnline(user) ? (
                               <Wifi size={14} className="text-green-500" />
@@ -202,10 +192,7 @@ export function UsersPage() {
                         ) : (
                           <span className="text-xs text-gray-400">Not connected</span>
                         )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">-</span>
-                    )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span className={clsx(

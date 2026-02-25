@@ -4,6 +4,7 @@ import { OrderCard } from '@/components/OrderCard';
 import { SkeletonStats, SkeletonCard, EmptyState, ErrorState } from '@/components/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@/lib/formatters';
+import { UserPlus, ClipboardList } from 'lucide-react';
 
 export function DashboardPage() {
   const { orders, loading, error, refetch } = useRealtimeOrders();
@@ -15,6 +16,7 @@ export function DashboardPage() {
     return new Date(o.created_at).toDateString() === today;
   });
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.total_amount, 0);
+  const activeCollectors = new Set(todayOrders.map((o) => o.collector_id)).size;
 
   if (error) {
     return (
@@ -27,7 +29,27 @@ export function DashboardPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-lg font-bold text-gray-800 mb-4">Dashboard</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-bold text-gray-800">Dashboard</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate('/users')}
+            className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50"
+          >
+            <UserPlus size={14} />
+            Add Collector
+          </button>
+          {orders.length > 0 && (
+            <button
+              onClick={() => navigate(`/orders/${orders[0].id}`)}
+              className="flex items-center gap-1.5 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-600"
+            >
+              <ClipboardList size={14} />
+              Latest Order
+            </button>
+          )}
+        </div>
+      </div>
 
       {loading ? (
         <>
@@ -41,7 +63,7 @@ export function DashboardPage() {
             <StatsCard title="Pending Orders" value={pendingOrders.length} color="yellow" />
             <StatsCard title="Today's Orders" value={todayOrders.length} color="blue" />
             <StatsCard title="Today's Revenue" value={formatCurrency(todayRevenue)} color="green" />
-            <StatsCard title="Total Orders" value={orders.length} color="blue" />
+            <StatsCard title="Active Collectors" value={activeCollectors} color="blue" subtitle="today" />
           </div>
 
           <h2 className="text-base font-semibold text-gray-800 mb-3">Recent Orders</h2>

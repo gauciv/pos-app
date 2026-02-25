@@ -1,12 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { apiGet } from '@/lib/api';
 import type { Order, PaginatedResponse } from '@/types';
 
-export function useRealtimeOrders() {
+interface UseRealtimeOrdersOptions {
+  onNewOrder?: (orderId: string) => void;
+}
+
+export function useRealtimeOrders(options?: UseRealtimeOrdersOptions) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const onNewOrderRef = useRef(options?.onNewOrder);
+  onNewOrderRef.current = options?.onNewOrder;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -32,9 +38,13 @@ export function useRealtimeOrders() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
-        async () => {
+        async (payload) => {
           // Refetch to get full joined data
           await fetchOrders();
+          // Notify about new order
+          if (onNewOrderRef.current && payload.new?.id) {
+            onNewOrderRef.current(payload.new.id as string);
+          }
         }
       )
       .on(
