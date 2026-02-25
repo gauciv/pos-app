@@ -3,9 +3,12 @@ from database import supabase
 
 def get_profile() -> dict | None:
     """Get the singleton company profile row."""
-    result = supabase.table("company_profile").select("*").execute()
-    if result.data:
-        return result.data[0]
+    try:
+        result = supabase.table("company_profile").select("*").execute()
+        if result.data:
+            return result.data[0]
+    except Exception:
+        pass
     return None
 
 
