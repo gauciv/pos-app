@@ -17,21 +17,22 @@ def resolve_store_from_branch(branch_id: str | None) -> str | None:
     branch = branch_result.data[0]
     branch_name = branch["name"]
 
-    # Check if a store already exists for this branch (match by name)
+    # Check if a store already exists for this branch (match by branch_id)
     existing = (
         supabase.table("stores")
         .select("id")
-        .eq("name", branch_name)
+        .eq("branch_id", branch_id)
         .limit(1)
         .execute()
     )
     if existing.data:
         return existing.data[0]["id"]
 
-    # Create a store entry for this branch
+    # Create a store entry linked to this branch
     store_result = supabase.table("stores").insert({
         "name": branch_name,
         "address": branch.get("location"),
+        "branch_id": branch_id,
     }).execute()
     return store_result.data[0]["id"]
 

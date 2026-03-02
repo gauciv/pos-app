@@ -13,6 +13,23 @@ router = APIRouter()
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
+# Magic bytes for allowed image formats
+_IMAGE_SIGNATURES = [
+    (b"\xff\xd8\xff", {"jpg", "jpeg"}),
+    (b"\x89PNG\r\n\x1a\n", {"png"}),
+    (b"GIF87a", {"gif"}),
+    (b"GIF89a", {"gif"}),
+    (b"RIFF", {"webp"}),
+]
+
+
+def _validate_image_content(content: bytes, extension: str) -> bool:
+    """Verify file content matches its extension by checking magic bytes."""
+    for signature, valid_exts in _IMAGE_SIGNATURES:
+        if content[:len(signature)] == signature:
+            return extension in valid_exts
+    return False
+
 
 @router.get("")
 async def list_products(
@@ -78,6 +95,13 @@ async def upload_product_image(
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
+
+    # Validate actual file content matches extension
+    if not _validate_image_content(content, ext):
+        raise HTTPException(
+            status_code=400,
+            detail="File content does not match its extension.",
+        )
 
     # Ensure bucket exists
     bucket_name = "product-images"

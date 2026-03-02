@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from database import supabase
 from dependencies import get_current_user
+from rate_limit import activation_limiter
 from schemas.auth import LoginRequest, ProfileUpdate
 from schemas.user import ActivationRequest
 from services import auth_service, activation_service
@@ -22,8 +23,15 @@ async def login(body: LoginRequest):
 
 
 @router.post("/activate")
-async def activate(body: ActivationRequest):
+async def activate(body: ActivationRequest, request: Request):
     """Public endpoint: validate activation code and return a magic link token."""
+    client_ip = request.client.host if request.client else "unknown"
+    if activation_limiter.is_limited(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many activation attempts. Try again later.",
+        )
+
     try:
         user_id = activation_service.validate_and_consume_code(body.code)
     except ValueError as e:
