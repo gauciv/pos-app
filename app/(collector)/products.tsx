@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Image,
   RefreshControl,
   useWindowDimensions,
   Platform,
@@ -216,19 +215,6 @@ export default function ProductsScreen() {
                   activeOpacity={0.7}
                 >
                   <View className="flex-row">
-                    {/* Product Image */}
-                    {item.image_url ? (
-                      <Image
-                        source={{ uri: item.image_url }}
-                        className="w-16 h-16 rounded-lg mr-3"
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View className="w-16 h-16 rounded-lg mr-3 bg-gray-100 items-center justify-center">
-                        <Ionicons name="cube-outline" size={24} color="#d1d5db" />
-                      </View>
-                    )}
-
                     {/* Product Info */}
                     <View className="flex-1 justify-center">
                       <Text
@@ -287,17 +273,6 @@ export default function ProductsScreen() {
                 <>
                   {/* Product info */}
                   <View className="flex-row items-center mb-6">
-                    {selectedProduct.image_url ? (
-                      <Image
-                        source={{ uri: selectedProduct.image_url }}
-                        className="w-20 h-20 rounded-xl mr-4"
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View className="w-20 h-20 rounded-xl mr-4 bg-gray-100 items-center justify-center">
-                        <Ionicons name="cube-outline" size={32} color="#d1d5db" />
-                      </View>
-                    )}
                     <View className="flex-1">
                       <Text className="text-lg font-bold text-gray-800">
                         {selectedProduct.name}
