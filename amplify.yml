@@ -1,0 +1,23 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd dashboard
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: dashboard/dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - dashboard/node_modules/**/*
+      environment:
+        variables:
+          VITE_SUPABASE_URL: YOUR_SUPABASE_URL
+          VITE_SUPABASE_ANON_KEY: YOUR_SUPABASE_ANON_KEY
+    appRoot: dashboard
