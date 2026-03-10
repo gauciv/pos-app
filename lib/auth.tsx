@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import { API_BASE_URL } from './constants';
 import type { AuthUser } from '@/types';
 
 interface AuthContextType {
@@ -98,18 +97,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function activate(code: string) {
-    const response = await fetch(`${API_BASE_URL}/auth/activate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code.toUpperCase().trim() }),
+    const { data, error } = await supabase.functions.invoke('activate', {
+      body: { code: code.toUpperCase().trim() },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Activation failed');
-    }
+    if (error) throw new Error(error.message || 'Activation failed');
+    if (!data) throw new Error('Activation failed');
 
-    const { token_hash, email, otp, user_id } = await response.json();
+    const { token_hash, email, otp, user_id } = data;
 
     // Try OTP first (more reliable), fall back to token_hash
     let authError;
@@ -138,26 +133,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Mark device as connected after successful auth
     if (currentSession && user_id) {
-      await fetch(`${API_BASE_URL}/auth/mark-connected`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentSession.access_token}`,
-        },
-      }).catch(() => {});
+      await supabase
+        .from('profiles')
+        .update({ device_connected_at: new Date().toISOString() })
+        .eq('id', user_id)
+        .catch(() => {});
     }
   }
 
   async function signOut() {
     // Mark device as disconnected before signing out
-    if (session?.access_token) {
-      await fetch(`${API_BASE_URL}/auth/mark-disconnected`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      }).catch(() => {});
+    if (session?.user?.id) {
+      await supabase
+        .from('profiles')
+        .update({ device_connected_at: null, last_seen_at: null })
+        .eq('id', session.user.id)
+        .catch(() => {});
     }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
