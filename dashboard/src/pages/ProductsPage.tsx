@@ -61,7 +61,7 @@ export function ProductsPage() {
     if (!deleteTarget) return;
     try {
       await deleteProduct(deleteTarget.id);
-      toast.success('Product deactivated');
+      toast.success('Product deleted');
     } catch {
       toast.error('Failed to delete product');
     }
@@ -200,16 +200,7 @@ export function ProductsPage() {
                       {product.sku || '—'}
                     </td>
                     <td className="px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-6 h-6 rounded object-cover flex-shrink-0" />
-                        ) : (
-                          <div className="w-6 h-6 rounded bg-[#f0f4f8] flex items-center justify-center flex-shrink-0">
-                            <Package size={11} className="text-[#8aa0b8]" />
-                          </div>
-                        )}
-                        <p className="text-xs text-[#0d1f35] font-medium">{product.name}</p>
-                      </div>
+                      <p className="text-xs text-[#0d1f35] font-medium">{product.name}</p>
                     </td>
                     <td className="px-3 py-2 text-xs text-[#4b5e73] hidden sm:table-cell">
                       {product.categories?.name || '—'}
@@ -257,9 +248,9 @@ export function ProductsPage() {
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Deactivate Product"
-          message={`Are you sure you want to deactivate "${deleteTarget.name}"? This will mark it as inactive.`}
-          confirmLabel="Deactivate"
+          title="Delete Product"
+          message={`Are you sure you want to permanently delete "${deleteTarget.name}"? This cannot be undone.`}
+          confirmLabel="Delete"
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />

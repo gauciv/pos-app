@@ -59,7 +59,7 @@ export function useProducts() {
   async function deleteProduct(id: string): Promise<void> {
     const { error: err } = await supabase
       .from('products')
-      .update({ is_active: false })
+      .delete()
       .eq('id', id);
     if (err) throw err;
     await fetchProducts();
