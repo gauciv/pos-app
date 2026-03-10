@@ -1,7 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { useProducts } from '@/hooks/useProducts';
 import { ArrowLeft } from 'lucide-react';
 import type { Product } from '@/types';
 import toast from 'react-hot-toast';
@@ -12,7 +11,6 @@ const labelCls = 'block text-xs font-medium text-[#4b5e73] mb-1';
 export function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { categories } = useProducts();
   const [product, setProduct] = useState<Product | undefined>(undefined);
   const [loading, setLoading] = useState(!!id);
   const isEditing = !!id;
@@ -21,7 +19,6 @@ export function ProductEditPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [sku, setSku] = useState('');
-  const [categoryId, setCategoryId] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('0');
   const [unit, setUnit] = useState('unit');
@@ -44,7 +41,6 @@ export function ProductEditPage() {
         setName(p.name || '');
         setDescription(p.description || '');
         setSku(p.sku || '');
-        setCategoryId(p.category_id || '');
         setPrice(p.price?.toString() || '');
         setStockQuantity(p.stock_quantity?.toString() || '0');
         setUnit(p.unit || 'unit');
@@ -83,7 +79,6 @@ export function ProductEditPage() {
       name: name.trim(),
       description: description.trim() || null,
       sku: sku.trim() || null,
-      category_id: categoryId || undefined,
       price: parsedPrice,
       stock_quantity: parsedStock,
       unit: unit.trim(),
@@ -171,31 +166,16 @@ export function ProductEditPage() {
             />
           </div>
 
-          {/* SKU + Category */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>SKU</label>
-              <input
-                type="text"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="e.g. PRD-001"
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Category</label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className={`${inputCls} bg-white`}
-              >
-                <option value="">No category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
+          {/* SKU */}
+          <div>
+            <label className={labelCls}>SKU</label>
+            <input
+              type="text"
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+              placeholder="e.g. PRD-001"
+              className={inputCls}
+            />
           </div>
 
           {/* Price + Stock + Unit */}

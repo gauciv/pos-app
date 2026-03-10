@@ -25,18 +25,6 @@ export interface ActivationCode {
   created_at: string;
 }
 
-export interface Branch {
-  id: string;
-  name: string;
-  display_id: string | null;
-  location: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  collector_count?: number;
-  last_order_at?: string | null;
-}
-
 export interface Store {
   id: string;
   name: string;
@@ -46,15 +34,6 @@ export interface Store {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  description: string | null;
-  sort_order: number;
-  is_active: boolean;
-  created_at: string;
 }
 
 export interface Product {

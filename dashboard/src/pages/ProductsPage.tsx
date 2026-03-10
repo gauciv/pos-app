@@ -45,22 +45,16 @@ function parseCSV(text: string): Partial<Product>[] {
 }
 
 export function ProductsPage() {
-  const { products, categories, loading, error, deleteProduct, fetchProducts, createProduct } = useProducts();
+  const { products, loading, error, deleteProduct, fetchProducts, createProduct } = useProducts();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleSearch(value: string) {
     setSearch(value);
-    fetchProducts(value || undefined, categoryFilter || undefined);
-  }
-
-  function handleCategoryFilter(value: string) {
-    setCategoryFilter(value);
-    fetchProducts(search || undefined, value || undefined);
+    fetchProducts(value || undefined);
   }
 
   async function handleDelete() {
@@ -108,8 +102,7 @@ export function ProductsPage() {
 
   const filteredProducts = products.filter((p) => {
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
-    const matchCat = !categoryFilter || p.category_id === categoryFilter;
-    return matchSearch && matchCat;
+    return matchSearch;
   });
 
   return (
@@ -155,16 +148,6 @@ export function ProductsPage() {
             className="w-full pl-7 pr-3 border border-[#dce8f5] rounded-md py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1a56db]"
           />
         </div>
-        <select
-          value={categoryFilter}
-          onChange={(e) => handleCategoryFilter(e.target.value)}
-          className="border border-[#dce8f5] rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1a56db] bg-white text-[#4b5e73]"
-        >
-          <option value="">All Categories</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
       </div>
 
       {/* Table */}

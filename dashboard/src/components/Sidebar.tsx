@@ -3,9 +3,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Package,
-  Tag,
   Users,
-  GitBranch,
   Building2,
   TrendingUp,
   ChevronsLeft,
@@ -20,9 +18,7 @@ const navItems = [
   { to: '/orders', label: 'Orders', icon: ShoppingCart },
   { to: '/forecast', label: 'Forecast', icon: TrendingUp },
   { to: '/products', label: 'Products', icon: Package },
-  { to: '/categories', label: 'Categories', icon: Tag },
   { to: '/users', label: 'Users', icon: Users },
-  { to: '/branches', label: 'Branches', icon: GitBranch },
   { to: '/company', label: 'Company', icon: Building2 },
 ];
 

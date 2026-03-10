@@ -86,11 +86,10 @@ Deno.serve(async (req: Request) => {
     }
 
     // Parse request body
-    let nickname: string, branch_id: string, tag: string | undefined
+    let nickname: string, tag: string | undefined
     try {
       const body = await req.json()
       nickname = body?.nickname
-      branch_id = body?.branch_id
       tag = body?.tag
     } catch {
       return jsonResponse({ error: 'Invalid JSON body' }, 400)
@@ -99,27 +98,12 @@ Deno.serve(async (req: Request) => {
     if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
       return jsonResponse({ error: 'nickname is required' }, 400)
     }
-    if (!branch_id || typeof branch_id !== 'string' || branch_id.trim() === '') {
-      return jsonResponse({ error: 'branch_id is required' }, 400)
-    }
 
-    // Validate branch exists
-    const { data: branch, error: branchError } = await adminClient
-      .from('branches')
-      .select('id, name')
-      .eq('id', branch_id)
-      .single()
-
-    if (branchError || !branch) {
-      return jsonResponse({ error: 'Branch not found' }, 400)
-    }
-
-    // Generate a unique display_id: e.g. "BRA-Fox-123"
-    const prefix = branch.name.slice(0, 3).toUpperCase()
+    // Generate a unique display_id: e.g. "COL-Fox-123"
     let displayId: string | null = null
 
     for (let attempt = 0; attempt < 20; attempt++) {
-      const candidate = `${prefix}-${randomAnimal()}-${randomNumber()}`
+      const candidate = `COL-${randomAnimal()}-${randomNumber()}`
 
       const { data: existing, error: existingError } = await adminClient
         .from('profiles')
@@ -170,7 +154,6 @@ Deno.serve(async (req: Request) => {
     const profileUpdate: Record<string, unknown> = {
       nickname: nickname.trim(),
       display_id: displayId,
-      branch_id,
     }
     if (tag !== undefined && tag !== null) {
       profileUpdate.tag = tag

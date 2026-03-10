@@ -3,13 +3,12 @@ import { X, Copy, RefreshCw, Check, Wifi, WifiOff, Pencil } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
-import type { Profile, ActivationCode, Branch } from '@/types';
+import type { Profile, ActivationCode } from '@/types';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 
 interface UserDetailModalProps {
   user: Profile & { activation_code?: ActivationCode | null };
-  branches: Branch[];
   onClose: () => void;
   onUpdated: () => void;
 }
@@ -26,7 +25,7 @@ function generateCode(): string {
 
 const inputCls = 'border border-[#dce8f5] rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1a56db] flex-1';
 
-export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDetailModalProps) {
+export function UserDetailModal({ user, onClose, onUpdated }: UserDetailModalProps) {
   const [activationCode, setActivationCode] = useState<ActivationCode | null>(
     user.activation_code || null
   );
@@ -44,14 +43,6 @@ export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDeta
     : false;
 
   const isConnected = !!user.device_connected_at;
-
-  const branchName = user.branch_id
-    ? branches.find((b) => b.id === user.branch_id)?.name || 'Unknown'
-    : 'Unassigned';
-
-  const branchLocation = user.branch_id
-    ? branches.find((b) => b.id === user.branch_id)?.location || null
-    : null;
 
   function startEditing(field: string, value: string) {
     setEditingField(field);
@@ -207,14 +198,6 @@ export function UserDetailModal({ user, branches, onClose, onUpdated }: UserDeta
           {/* Collector Info */}
           <div className="grid grid-cols-2 gap-3">
             <EditableField label="Nickname" field="nickname" value={user.nickname || user.full_name} />
-            <div>
-              <p className="text-[10px] text-[#8aa0b8] uppercase tracking-wide mb-0.5">Branch</p>
-              <p className="text-xs font-medium text-[#0d1f35]">{branchName}</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-[#8aa0b8] uppercase tracking-wide mb-0.5">Location</p>
-              <p className="text-xs text-[#0d1f35]">{branchLocation || 'Not set'}</p>
-            </div>
             <EditableField label="Tag" field="tag" value={user.tag || ''} />
           </div>
 

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Plus, Wifi, WifiOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { UserDetailModal } from '@/components/UserDetailModal';
 import { clsx } from 'clsx';
-import type { Profile, ActivationCode, Branch } from '@/types';
+import type { Profile, ActivationCode } from '@/types';
 import toast from 'react-hot-toast';
 
 type UserWithCode = Profile & { activation_code?: ActivationCode | null };
@@ -13,9 +12,7 @@ const inputCls = 'border border-[#dce8f5] rounded-md px-2.5 py-1.5 text-xs focus
 const labelCls = 'block text-xs font-medium text-[#4b5e73] mb-1';
 
 export function UsersPage() {
-  const navigate = useNavigate();
   const [users, setUsers] = useState<Profile[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState<Profile | null>(null);
@@ -25,7 +22,6 @@ export function UsersPage() {
 
   // Form state
   const [nickname, setNickname] = useState('');
-  const [branchId, setBranchId] = useState('');
   const [tag, setTag] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
@@ -46,22 +42,8 @@ export function UsersPage() {
     }
   }
 
-  async function fetchBranches() {
-    try {
-      const { data } = await supabase
-        .from('branches')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-      setBranches((data as Branch[]) || []);
-    } catch {
-      // Non-critical
-    }
-  }
-
   useEffect(() => {
     fetchUsers();
-    fetchBranches();
     const interval = setInterval(() => {
       fetchUsers();
     }, 15000);
@@ -73,17 +55,13 @@ export function UsersPage() {
       setFormError('Nickname is required');
       return;
     }
-    if (!branchId) {
-      setFormError('A branch is required. Please select or create one first.');
-      return;
-    }
 
     setFormLoading(true);
     setFormError('');
 
     try {
       const { error } = await supabase.functions.invoke('create-collector', {
-        body: { nickname: nickname.trim(), branch_id: branchId, tag: tag.trim() || undefined },
+        body: { nickname: nickname.trim(), tag: tag.trim() || undefined },
       });
       if (error) throw error;
       toast.success('Collector created');
@@ -167,7 +145,6 @@ export function UsersPage() {
 
   function resetForm() {
     setNickname('');
-    setBranchId('');
     setTag('');
     setFormError('');
   }
@@ -175,11 +152,6 @@ export function UsersPage() {
   function isOnline(user: Profile) {
     if (!user.last_seen_at) return false;
     return new Date().getTime() - new Date(user.last_seen_at).getTime() < 5 * 60 * 1000;
-  }
-
-  function getBranchName(id: string | null) {
-    if (!id) return null;
-    return branches.find((b) => b.id === id)?.name || null;
   }
 
   return (
@@ -223,7 +195,6 @@ export function UsersPage() {
                 <tr className="border-b border-[#e2ecf9] bg-[#f8fafd]">
                   <th className="px-3 py-2 text-left text-xs font-medium text-[#8aa0b8] uppercase tracking-wide">ID</th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-[#8aa0b8] uppercase tracking-wide">Nickname</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-[#8aa0b8] uppercase tracking-wide hidden sm:table-cell">Branch</th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-[#8aa0b8] uppercase tracking-wide hidden md:table-cell">Connected</th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-[#8aa0b8] uppercase tracking-wide">Status</th>
                   <th className="px-3 py-2 text-right text-xs font-medium text-[#8aa0b8] uppercase tracking-wide">Actions</th>
@@ -245,11 +216,6 @@ export function UsersPage() {
                         <span className="ml-1.5 px-1 py-0.5 bg-[#f0f4f8] text-[#8aa0b8] text-[9px] rounded">
                           {user.tag}
                         </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-[#4b5e73] hidden sm:table-cell">
-                      {getBranchName(user.branch_id) || (
-                        <span className="text-[#8aa0b8]">Unassigned</span>
                       )}
                     </td>
                     <td className="px-3 py-2 hidden md:table-cell">
@@ -336,28 +302,6 @@ export function UsersPage() {
                   placeholder="Enter nickname"
                   className={inputCls}
                 />
-              </div>
-              <div>
-                <label className={labelCls}>Branch *</label>
-                <select
-                  value={branchId}
-                  onChange={(e) => setBranchId(e.target.value)}
-                  className={`${inputCls} bg-white`}
-                >
-                  <option value="">Select branch...</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-                {branches.length === 0 && (
-                  <button
-                    type="button"
-                    onClick={() => { setShowCreateModal(false); navigate('/branches'); }}
-                    className="text-xs text-[#1a56db] hover:text-[#1447c0] mt-1"
-                  >
-                    No branches yet — create one first
-                  </button>
-                )}
               </div>
               <div>
                 <label className={labelCls}>Tag (optional)</label>
@@ -454,7 +398,6 @@ export function UsersPage() {
       {selectedUser && (
         <UserDetailModal
           user={selectedUser}
-          branches={branches}
           onClose={() => setSelectedUser(null)}
           onUpdated={fetchUsers}
         />

@@ -9,9 +9,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/orders': 'Orders',
   '/forecast': 'Forecast',
   '/products': 'Products',
-  '/categories': 'Categories',
   '/users': 'Collectors',
-  '/branches': 'Branches',
   '/company': 'Company Profile',
 };
 

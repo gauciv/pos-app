@@ -11,9 +11,7 @@ import { OrdersPage } from '@/pages/OrdersPage';
 import { OrderDetailPage } from '@/pages/OrderDetailPage';
 import { ProductsPage } from '@/pages/ProductsPage';
 import { ProductEditPage } from '@/pages/ProductEditPage';
-import { CategoriesPage } from '@/pages/CategoriesPage';
 import { UsersPage } from '@/pages/UsersPage';
-import { BranchesPage } from '@/pages/BranchesPage';
 import { CompanyProfilePage } from '@/pages/CompanyProfilePage';
 import { ForecastPage } from '@/pages/ForecastPage';
 
@@ -51,9 +49,7 @@ export default function App() {
                     <Route path="/products" element={<ProductsPage />} />
                     <Route path="/products/new" element={<ProductEditPage />} />
                     <Route path="/products/:id/edit" element={<ProductEditPage />} />
-                    <Route path="/categories" element={<CategoriesPage />} />
                     <Route path="/users" element={<UsersPage />} />
-                    <Route path="/branches" element={<BranchesPage />} />
                     <Route path="/company" element={<CompanyProfilePage />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>

@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Product, Category } from '@/types';
+import type { Product } from '@/types';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,23 +29,9 @@ export function useProducts() {
     }
   }, []);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const { data, error: err } = await supabase
-        .from('categories')
-        .select('*')
-        .order('sort_order');
-      if (err) throw err;
-      setCategories((data as Category[]) || []);
-    } catch {
-      // Non-critical
-    }
-  }, []);
-
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
-  }, [fetchProducts, fetchCategories]);
+  }, [fetchProducts]);
 
   async function createProduct(data: Partial<Product>): Promise<Product> {
     const { data: result, error: err } = await supabase
@@ -80,51 +65,14 @@ export function useProducts() {
     await fetchProducts();
   }
 
-  async function createCategory(data: { name: string; description?: string }): Promise<Category> {
-    const { data: result, error: err } = await supabase
-      .from('categories')
-      .insert(data)
-      .select()
-      .single();
-    if (err) throw err;
-    await fetchCategories();
-    return result as Category;
-  }
-
-  async function updateCategory(id: string, data: Partial<Category>): Promise<Category> {
-    const { data: result, error: err } = await supabase
-      .from('categories')
-      .update(data)
-      .eq('id', id)
-      .select()
-      .single();
-    if (err) throw err;
-    await fetchCategories();
-    return result as Category;
-  }
-
-  async function deleteCategory(id: string): Promise<void> {
-    const { error: err } = await supabase
-      .from('categories')
-      .update({ is_active: false })
-      .eq('id', id);
-    if (err) throw err;
-    await fetchCategories();
-  }
-
   return {
     products,
-    categories,
     total,
     loading,
     error,
     fetchProducts,
-    fetchCategories,
     createProduct,
     updateProduct,
     deleteProduct,
-    createCategory,
-    updateCategory,
-    deleteCategory,
   };
 }
