@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getProducts, getCategories } from '@/services/products.service';
+import { getProducts } from '@/services/products.service';
 import { supabase } from '@/lib/supabase';
-import type { Product, Category } from '@/types';
+import type { Product } from '@/types';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -35,22 +34,9 @@ export function useProducts() {
     setRefreshing(false);
   }, [fetchProducts]);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const data = await getCategories();
-      setCategories(data);
-    } catch {
-      // Categories are non-critical, fail silently
-    }
-  }, []);
-
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
 
   // Subscribe to realtime stock updates
   useEffect(() => {
@@ -78,7 +64,6 @@ export function useProducts() {
 
   return {
     products,
-    categories,
     loading,
     error,
     search,

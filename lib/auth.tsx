@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*, branches:branch_id(name)')
+          .select('*')
           .eq('id', userId)
           .maybeSingle();
 
@@ -76,8 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: data.email,
           full_name: data.full_name,
           role: data.role,
-          branch_id: data.branch_id || null,
-          branch_name: (data.branches as any)?.name || null,
         });
         setIsLoading(false);
         return;

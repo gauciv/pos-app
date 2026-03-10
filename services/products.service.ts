@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Product, Category, PaginatedResponse, ProductFilters } from '@/types';
+import type { Product, PaginatedResponse, ProductFilters } from '@/types';
 
 export async function getProducts(filters?: ProductFilters): Promise<PaginatedResponse<Product>> {
   let query = supabase
@@ -38,14 +38,4 @@ export async function getProduct(productId: string): Promise<Product> {
     .single();
   if (error) throw new Error(error.message);
   return data as Product;
-}
-
-export async function getCategories(): Promise<Category[]> {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order');
-  if (error) throw new Error(error.message);
-  return data as Category[];
 }
