@@ -44,7 +44,6 @@ export interface Product {
   category_id: string;
   price: number;
   stock_quantity: number;
-  unit: string;
   image_url: string | null;
   is_active: boolean;
   created_at: string;

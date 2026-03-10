@@ -21,7 +21,6 @@ export function ProductEditPage() {
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('0');
-  const [unit, setUnit] = useState('unit');
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -43,7 +42,6 @@ export function ProductEditPage() {
         setSku(p.sku || '');
         setPrice(p.price?.toString() || '');
         setStockQuantity(p.stock_quantity?.toString() || '0');
-        setUnit(p.unit || 'unit');
         setIsActive(p.is_active);
       } catch {
         toast.error('Product not found');
@@ -81,7 +79,6 @@ export function ProductEditPage() {
       sku: sku.trim() || null,
       price: parsedPrice,
       stock_quantity: parsedStock,
-      unit: unit.trim(),
       is_active: isActive,
     };
 
@@ -178,8 +175,8 @@ export function ProductEditPage() {
             />
           </div>
 
-          {/* Price + Stock + Unit */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Price + Stock */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Price *</label>
               <input
@@ -199,16 +196,6 @@ export function ProductEditPage() {
                 min="0"
                 value={stockQuantity}
                 onChange={(e) => setStockQuantity(e.target.value)}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Unit</label>
-              <input
-                type="text"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="unit, kg, box..."
                 className={inputCls}
               />
             </div>
