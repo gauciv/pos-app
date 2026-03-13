@@ -1,10 +1,22 @@
-import { apiGet } from './api';
+import { supabase } from '@/lib/supabase';
 import type { Store } from '@/types';
 
 export async function getStores(): Promise<Store[]> {
-  return apiGet<Store[]>('/stores');
+  const { data, error } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('is_active', true)
+    .order('name');
+  if (error) throw new Error(error.message);
+  return data as Store[];
 }
 
 export async function getStore(storeId: string): Promise<Store> {
-  return apiGet<Store>(`/stores/${storeId}`);
+  const { data, error } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('id', storeId)
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Store;
 }

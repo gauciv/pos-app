@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import { API_BASE_URL } from '@/lib/constants';
+const SUPABASE_HEALTH_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/`;
 
 const CONSECUTIVE_FAILURES_THRESHOLD = 2;
 const POLL_INTERVAL = 30000;
@@ -27,8 +27,8 @@ export function useNetworkStatus() {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-        // Ping our own API health endpoint instead of external service
-        await fetch(`${API_BASE_URL}/health`, {
+        // Ping Supabase REST endpoint to check connectivity
+        await fetch(SUPABASE_HEALTH_URL, {
           method: 'GET',
           signal: controller.signal,
           cache: 'no-store',

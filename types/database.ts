@@ -20,15 +20,6 @@ export interface Store {
   updated_at: string;
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  description: string | null;
-  sort_order: number;
-  is_active: boolean;
-  created_at: string;
-}
-
 export interface Product {
   id: string;
   name: string;
