@@ -15,15 +15,35 @@ import {
 import { clsx } from 'clsx';
 import { useSidebar } from '@/contexts/SidebarContext';
 
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/orders', label: 'Orders', icon: ShoppingCart },
-  { to: '/forecast', label: 'Forecast', icon: TrendingUp },
-  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/products', label: 'Products', icon: Package },
-  { to: '/users', label: 'Users', icon: Users },
-  { to: '/company', label: 'Company', icon: Building2 },
-  { to: '/settings', label: 'Settings', icon: Settings },
+const navGroups = [
+  {
+    label: 'Operations',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/orders', label: 'Orders', icon: ShoppingCart },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { to: '/forecast', label: 'Forecast', icon: TrendingUp },
+      { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Management',
+    items: [
+      { to: '/products', label: 'Products', icon: Package },
+      { to: '/users', label: 'Users', icon: Users },
+      { to: '/company', label: 'Company', icon: Building2 },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/settings', label: 'Settings', icon: Settings },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -68,34 +88,40 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Nav section label */}
-      {(!isCollapsed || isMobile) && (
-        <p className="text-[10px] font-semibold text-[#3d5a7a] uppercase tracking-widest mb-2 px-2">
-          Navigation
-        </p>
-      )}
-
-      {/* Nav items */}
-      <nav className="flex-1 space-y-0.5">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={() => isMobile && close()}
-            className={({ isActive }) =>
-              clsx(
-                'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors',
-                isCollapsed && !isMobile ? 'justify-center' : '',
-                isActive
-                  ? 'bg-[#1a56db] text-white shadow-sm'
-                  : 'text-[#a8bdd4] hover:bg-[#132848] hover:text-white'
-              )
-            }
-            title={isCollapsed && !isMobile ? item.label : undefined}
-          >
-            <item.icon size={16} className="flex-shrink-0" />
-            {(!isCollapsed || isMobile) && <span>{item.label}</span>}
-          </NavLink>
+      {/* Nav groups */}
+      <nav className="flex-1 space-y-4">
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            {(!isCollapsed || isMobile) ? (
+              <p className="text-[10px] font-semibold text-[#3d5a7a] uppercase tracking-widest mb-2 px-2">
+                {group.label}
+              </p>
+            ) : (
+              <div className="h-px bg-[#1a2d4a] mx-1 mb-2" />
+            )}
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => isMobile && close()}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors',
+                      isCollapsed && !isMobile ? 'justify-center' : '',
+                      isActive
+                        ? 'bg-[#132848] text-white border-l-2 border-[#1a56db]'
+                        : 'text-[#a8bdd4] hover:bg-[#132848] hover:text-white'
+                    )
+                  }
+                  title={isCollapsed && !isMobile ? item.label : undefined}
+                >
+                  <item.icon size={16} className="flex-shrink-0" />
+                  {(!isCollapsed || isMobile) && <span>{item.label}</span>}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
