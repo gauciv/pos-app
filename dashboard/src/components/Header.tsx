@@ -10,11 +10,24 @@ function LiveClock() {
   });
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      setTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
-    }, 1000);
-    return () => clearInterval(interval);
+    // Sync to next minute boundary, then update every 60s
+    const now = new Date();
+    const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+
+    const timeout = setTimeout(() => {
+      setTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
+      const interval = setInterval(() => {
+        setTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
+      }, 60000);
+      // Store cleanup for the interval
+      cleanupRef.current = () => clearInterval(interval);
+    }, msUntilNextMinute);
+
+    const cleanupRef = { current: () => {} };
+    return () => {
+      clearTimeout(timeout);
+      cleanupRef.current();
+    };
   }, []);
 
   return (
