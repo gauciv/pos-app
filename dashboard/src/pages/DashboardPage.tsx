@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRealtimeOrders } from '@/hooks/useRealtimeOrders';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@/lib/formatters';
-import { format } from 'date-fns';
+import { format, startOfDay, subDays, endOfDay } from 'date-fns';
 import { clsx } from 'clsx';
-import { TrendingUp, ShoppingCart, Clock, Users, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ShoppingCart, Clock, Users, ArrowRight } from 'lucide-react';
 import { statusBadge } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 import type { Order } from '@/types';
 
 function MetricCard({
@@ -14,12 +15,14 @@ function MetricCard({
   sub,
   icon: Icon,
   accent,
+  trend,
 }: {
   title: string;
   value: string | number;
   sub?: string;
   icon: React.ElementType;
   accent: string;
+  trend?: number;
 }) {
   return (
     <div className="bg-white border border-[#e2ecf9] rounded-lg p-3 flex items-start gap-3">
@@ -29,7 +32,26 @@ function MetricCard({
       <div className="min-w-0">
         <p className="text-xs text-[#8aa0b8] mb-0.5">{title}</p>
         <p className="text-base font-bold text-[#0d1f35] leading-tight">{value}</p>
-        {sub && <p className="text-[10px] text-[#8aa0b8] mt-0.5">{sub}</p>}
+        {trend !== undefined ? (
+          <div
+            className={clsx('flex items-center gap-1 mt-0.5 text-[10px] font-medium', {
+              'text-green-600': trend > 0,
+              'text-red-500': trend < 0,
+              'text-[#8aa0b8]': trend === 0,
+            })}
+          >
+            {trend > 0 ? (
+              <TrendingUp size={10} />
+            ) : trend < 0 ? (
+              <TrendingDown size={10} />
+            ) : (
+              <Minus size={10} />
+            )}
+            {trend === 0 ? 'No change' : `${Math.abs(trend).toFixed(0)}% vs yesterday`}
+          </div>
+        ) : (
+          sub && <p className="text-[10px] text-[#8aa0b8] mt-0.5">{sub}</p>
+        )}
       </div>
     </div>
   );
@@ -75,6 +97,35 @@ export function DashboardPage() {
   const { orders, loading, error, refetch } = useRealtimeOrders();
   const navigate = useNavigate();
 
+  const [yesterdayData, setYesterdayData] = useState<{
+    revenue: number;
+    orders: number;
+    collectors: number;
+  } | null>(null);
+
+  useEffect(() => {
+    async function fetchYesterday() {
+      const yesterday = subDays(new Date(), 1);
+      const start = startOfDay(yesterday).toISOString();
+      const end = endOfDay(yesterday).toISOString();
+
+      const { data } = await supabase
+        .from('orders')
+        .select('total_amount, status, collector_id')
+        .gte('created_at', start)
+        .lte('created_at', end);
+
+      if (data) {
+        setYesterdayData({
+          revenue: data.filter((o) => o.status === 'completed').reduce((sum, o) => sum + (o.total_amount || 0), 0),
+          orders: data.length,
+          collectors: new Set(data.map((o) => o.collector_id)).size,
+        });
+      }
+    }
+    fetchYesterday();
+  }, []);
+
   const { pendingOrders, todayOrders, todayRevenue, activeCollectors } = useMemo(() => {
     const today = new Date().toDateString();
     const pending = orders.filter((o) => o.status === 'pending');
@@ -87,6 +138,19 @@ export function DashboardPage() {
   }, [orders]);
 
   const recentOrders = orders.slice(0, 10);
+
+  const trends = useMemo(() => {
+    if (!yesterdayData) return { revenue: undefined, orders: undefined, collectors: undefined };
+    function calc(current: number, previous: number): number {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    }
+    return {
+      revenue: calc(todayRevenue, yesterdayData.revenue),
+      orders: calc(todayOrders.length, yesterdayData.orders),
+      collectors: calc(activeCollectors, yesterdayData.collectors),
+    };
+  }, [todayRevenue, todayOrders.length, activeCollectors, yesterdayData]);
 
   if (error) {
     return (
@@ -124,6 +188,7 @@ export function DashboardPage() {
             sub="from completed orders"
             icon={TrendingUp}
             accent="bg-blue-50 text-blue-600"
+            trend={trends.revenue}
           />
           <MetricCard
             title="Today Orders"
@@ -131,6 +196,7 @@ export function DashboardPage() {
             sub="orders placed today"
             icon={ShoppingCart}
             accent="bg-indigo-50 text-indigo-600"
+            trend={trends.orders}
           />
           <MetricCard
             title="Pending"
@@ -145,6 +211,7 @@ export function DashboardPage() {
             sub="active today"
             icon={Users}
             accent="bg-emerald-50 text-emerald-600"
+            trend={trends.collectors}
           />
         </div>
       )}
