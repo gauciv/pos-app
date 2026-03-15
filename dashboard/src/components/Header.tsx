@@ -29,7 +29,7 @@ function LiveClock() {
   const date = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
-    <span className="text-xs font-mono text-[#4b5e73] tabular-nums">
+    <span className="text-xs font-mono text-blue-200/70 tabular-nums">
       {date} &middot; {time}
     </span>
   );
@@ -54,12 +54,12 @@ export function Header() {
   }, []);
 
   return (
-    <header className="bg-white border-b border-[#e2ecf9] px-4 h-10 flex items-center justify-between flex-shrink-0">
+    <header className="bg-gradient-to-r from-[#0A2040] to-[#0D2B52] border-b border-white/10 px-4 h-10 flex items-center justify-between flex-shrink-0">
       <div className="flex items-center gap-3">
         {isMobile && (
           <button
             onClick={toggle}
-            className="p-1 text-[#4b5e73] hover:text-[#0d1f35] rounded transition-colors"
+            className="p-1 text-blue-200/70 hover:text-white rounded transition-colors"
           >
             <Menu size={18} />
           </button>
@@ -69,25 +69,25 @@ export function Header() {
         {!isDashboard && (
           <>
             <LiveClock />
-            <div className="h-4 w-px bg-[#e2ecf9]" />
+            <div className="h-4 w-px bg-white/10" />
           </>
         )}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-1.5 text-xs text-[#4b5e73] hover:text-[#0d1f35] transition-colors"
+            className="flex items-center gap-1.5 text-xs text-blue-200/70 hover:text-white transition-colors"
           >
-            <div className="w-6 h-6 rounded-full bg-[#dce8f5] flex items-center justify-center">
-              <User size={12} className="text-[#1a56db]" />
+            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
+              <User size={12} className="text-blue-200" />
             </div>
             <ChevronDown size={12} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#e2ecf9] rounded-lg shadow-lg py-1 z-50">
+            <div className="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
               <button
                 onClick={() => { setDropdownOpen(false); signOut(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
               >
                 <LogOut size={13} />
                 Sign out

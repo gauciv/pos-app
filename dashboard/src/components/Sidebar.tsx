@@ -13,7 +13,7 @@ import {
   PanelLeft,
   MousePointerClick,
 } from 'lucide-react';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 import { useSidebar, SidebarMode } from '@/contexts/SidebarContext';
 
 const navGroups = [
@@ -63,29 +63,29 @@ export function Sidebar() {
     <>
       {/* Logo / Brand */}
       <div
-        className={clsx(
+        className={cn(
           'flex items-center mb-6',
           isCollapsed ? 'justify-center px-0' : 'justify-between px-1'
         )}
       >
         {showExpanded && (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#1a56db] flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
               <ShoppingCart size={14} className="text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm font-bold text-white leading-tight tracking-wide">POS Admin</h1>
-              <p className="text-[10px] text-[#5b7da8] leading-tight">Order Management</p>
+              <h1 className="text-base font-bold text-white leading-tight tracking-tight">POS Admin</h1>
+              <p className="text-[10px] text-blue-200/50 leading-tight">Order Management</p>
             </div>
           </div>
         )}
         {isCollapsed && (
-          <div className="w-7 h-7 rounded-lg bg-[#1a56db] flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
             <ShoppingCart size={14} className="text-white" />
           </div>
         )}
         {isMobile && (
-          <button onClick={close} className="p-1.5 text-[#5b7da8] hover:text-white rounded-md hover:bg-[#132848] transition-colors">
+          <button onClick={close} className="p-1.5 text-blue-200/50 hover:text-white rounded-md hover:bg-white/10 transition-colors">
             <X size={16} />
           </button>
         )}
@@ -96,11 +96,11 @@ export function Sidebar() {
         {navGroups.map((group) => (
           <div key={group.label}>
             {showExpanded ? (
-              <p className="text-[10px] font-semibold text-[#3d5a7a] uppercase tracking-widest mb-2 px-2">
+              <p className="text-[10px] font-semibold text-blue-200/40 uppercase tracking-widest mb-2 px-2">
                 {group.label}
               </p>
             ) : (
-              <div className="h-px bg-[#1a2d4a] mx-1 mb-2" />
+              <div className="h-px bg-white/10 mx-1 mb-2" />
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => (
@@ -109,18 +109,25 @@ export function Sidebar() {
                   to={item.to}
                   onClick={() => isMobile && close()}
                   className={({ isActive }) =>
-                    clsx(
-                      'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors',
+                    cn(
+                      'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-medium transition-all duration-150 relative',
                       isCollapsed ? 'justify-center' : '',
                       isActive
-                        ? 'bg-[#132848] text-white border-l-2 border-[#1a56db]'
-                        : 'text-[#a8bdd4] hover:bg-[#132848] hover:text-white'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-blue-200/70 hover:bg-white/8 hover:text-white'
                     )
                   }
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <item.icon size={16} className="flex-shrink-0" />
-                  {showExpanded && <span>{item.label}</span>}
+                  {({ isActive }) => (
+                    <>
+                      <item.icon size={16} className={cn('flex-shrink-0', isActive ? 'text-white' : 'text-blue-300/60')} />
+                      {showExpanded && <span>{item.label}</span>}
+                      {isActive && showExpanded && (
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/60" />
+                      )}
+                    </>
+                  )}
                 </NavLink>
               ))}
             </div>
@@ -130,18 +137,18 @@ export function Sidebar() {
 
       {/* Mode toggle (desktop only) */}
       {!isMobile && (
-        <div className="mt-4 pt-3 border-t border-[#1a2d4a]">
+        <div className="mt-4 pt-3 border-t border-white/10">
           {showExpanded ? (
-            <div className="flex items-center gap-1 bg-[#081425] rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5">
               {modeOptions.map(({ mode: m, icon: Icon, label }) => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={clsx(
+                  className={cn(
                     'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-medium transition-colors',
                     mode === m
-                      ? 'bg-[#1a56db] text-white'
-                      : 'text-[#5b7da8] hover:text-white'
+                      ? 'bg-white/15 text-white'
+                      : 'text-blue-300/40 hover:text-white'
                   )}
                   title={label}
                 >
@@ -156,11 +163,11 @@ export function Sidebar() {
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={clsx(
+                  className={cn(
                     'w-8 h-8 rounded-md flex items-center justify-center transition-colors',
                     mode === m
-                      ? 'bg-[#1a56db] text-white'
-                      : 'text-[#5b7da8] hover:text-white hover:bg-[#132848]'
+                      ? 'bg-white/15 text-white'
+                      : 'text-blue-300/40 hover:text-white hover:bg-white/10'
                   )}
                   title={label}
                 >
@@ -179,11 +186,11 @@ export function Sidebar() {
     return (
       <>
         {isOpen && (
-          <div className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm" onClick={close} />
+          <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={close} />
         )}
         <aside
-          className={clsx(
-            'fixed inset-y-0 left-0 z-50 w-60 bg-[#0c1c35] text-white p-4 flex flex-col transition-transform duration-200',
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 w-52 bg-gradient-to-b from-[#0A2040] to-[#0D2B52] text-white p-4 flex flex-col transition-transform duration-200',
             isOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -194,25 +201,22 @@ export function Sidebar() {
   }
 
   // Desktop: sticky sidebar
-  // In hover mode: collapsed by default, expands as overlay on hover
-  // In expanded mode: always expanded, pushes content
-  // In collapsed mode: always collapsed
   return (
     <>
       {/* Spacer — reserves space in the flex layout so content doesn't jump */}
       <div
-        className={clsx(
+        className={cn(
           'flex-shrink-0 transition-all duration-200',
-          mode === 'expanded' ? 'w-[200px]' : 'w-[52px]'
+          mode === 'expanded' ? 'w-52' : 'w-14'
         )}
       />
       <aside
         onMouseEnter={() => mode === 'hover' && setHovered(true)}
         onMouseLeave={() => mode === 'hover' && setHovered(false)}
-        className={clsx(
-          'fixed inset-y-0 left-0 bg-[#0c1c35] text-white p-3 flex flex-col transition-all duration-200 flex-shrink-0',
+        className={cn(
+          'fixed inset-y-0 left-0 bg-gradient-to-b from-[#0A2040] to-[#0D2B52] text-white p-3 flex flex-col transition-all duration-200 flex-shrink-0',
           isOverlay ? 'z-40 shadow-2xl shadow-black/40' : 'z-30',
-          isExpanded ? 'w-[200px]' : 'w-[52px]'
+          isExpanded ? 'w-52' : 'w-14'
         )}
       >
         {sidebarContent}
