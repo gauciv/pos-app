@@ -20,7 +20,7 @@ import { AnalyticsPage } from '@/pages/AnalyticsPage';
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen overflow-hidden bg-[#f0f4f8]">
+      <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 h-screen">
           <Header />
