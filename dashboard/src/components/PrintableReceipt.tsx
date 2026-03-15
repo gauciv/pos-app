@@ -8,6 +8,8 @@ interface CompanyOverride {
   contact_phone?: string | null;
   contact_email?: string | null;
   receipt_footer?: string | null;
+  prepared_by?: string | null;
+  received_by?: string | null;
 }
 
 interface PrintableReceiptProps {
@@ -71,6 +73,8 @@ export function PrintableReceipt({ order, companyOverride }: PrintableReceiptPro
   const phone = co.contact_phone ?? profile?.contact_phone;
   const email = co.contact_email ?? profile?.contact_email;
   const footerText = co.receipt_footer ?? profile?.receipt_footer;
+  const preparedByLabel = co.prepared_by ?? profile?.prepared_by ?? 'Prepared By';
+  const receivedByLabel = co.received_by ?? profile?.received_by ?? 'Received By';
 
   return (
     <div id="printable-receipt" style={s.root}>
@@ -169,9 +173,9 @@ export function PrintableReceipt({ order, companyOverride }: PrintableReceiptPro
               <td style={{ width: '45%' }}><div style={s.sigLine} /></td>
             </tr>
             <tr>
-              <td style={s.sigLabel}>Received By</td>
+              <td style={s.sigLabel}>{receivedByLabel}</td>
               <td />
-              <td style={s.sigLabel}>Prepared By</td>
+              <td style={s.sigLabel}>{preparedByLabel}</td>
             </tr>
           </tbody>
         </table>

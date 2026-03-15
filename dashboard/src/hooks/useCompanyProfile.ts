@@ -8,6 +8,8 @@ interface CompanyProfile {
   contact_phone: string | null;
   contact_email: string | null;
   receipt_footer: string | null;
+  prepared_by: string | null;
+  received_by: string | null;
   updated_at: string | null;
 }
 

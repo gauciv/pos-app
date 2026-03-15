@@ -12,8 +12,11 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  Trash2,
 } from 'lucide-react';
 import type { Order } from '@/types';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import toast from 'react-hot-toast';
 
 interface StoreData {
   id: string;
@@ -41,6 +44,7 @@ export function StoresPage() {
   const [expandedStore, setExpandedStore] = useState<string | null>(null);
   const [storeOrders, setStoreOrders] = useState<Record<string, Order[]>>({});
   const [ordersLoading, setOrdersLoading] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<StoreData | null>(null);
 
   useEffect(() => {
     async function fetchStores() {
@@ -81,6 +85,24 @@ export function StoresPage() {
         .limit(10);
       setStoreOrders((prev) => ({ ...prev, [storeId]: (data as Order[]) || [] }));
       setOrdersLoading(null);
+    }
+  }
+
+  async function handleDeleteStore() {
+    if (!deleteTarget) return;
+    try {
+      const { error: err } = await supabase
+        .from('stores')
+        .delete()
+        .eq('id', deleteTarget.id);
+      if (err) throw err;
+      setStores((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+      if (expandedStore === deleteTarget.id) setExpandedStore(null);
+      toast.success('Store deleted');
+    } catch {
+      toast.error('Failed to delete store. It may have associated orders.');
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -168,6 +190,13 @@ export function StoresPage() {
                     {!store.is_active && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E06C75]/10 text-[#E06C75] font-medium">Inactive</span>
                     )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteTarget(store); }}
+                      className="p-1.5 text-[#8FAABE]/30 hover:text-[#E06C75] transition-colors rounded-md hover:bg-[#E06C75]/10"
+                      title="Delete store"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                     {isExpanded ? (
                       <ChevronUp size={16} className="text-[#8FAABE]/40" />
                     ) : (
@@ -245,6 +274,16 @@ export function StoresPage() {
             );
           })}
         </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete Store"
+          message={`Delete "${deleteTarget.name}"? This cannot be undone. Stores with existing orders cannot be deleted.`}
+          confirmLabel="Delete"
+          onConfirm={handleDeleteStore}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
     </div>
   );
