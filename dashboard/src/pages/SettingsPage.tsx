@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ChevronDown,
   Trash2,
@@ -16,6 +16,9 @@ import {
   Users,
   MapPin,
   Shield,
+  Camera,
+  Loader2,
+  UserCircle,
 } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { useSidebar, SidebarMode } from '@/contexts/SidebarContext';
@@ -109,6 +112,14 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   );
 }
 
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  avatar_url: string | null;
+  sort_order: number;
+}
+
 export function SettingsPage() {
   const { total, clearAllProducts } = useProducts();
   const { mode, setMode } = useSidebar();
@@ -118,6 +129,10 @@ export function SettingsPage() {
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({ orderCount: 0, productCount: 0, userCount: 0, storeCount: 0 });
   const [exporting, setExporting] = useState<string | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(loadNotifPrefs);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   function updateNotifPref(key: keyof NotifPrefs, value: boolean) {
     setNotifPrefs((prev) => {
@@ -144,6 +159,50 @@ export function SettingsPage() {
     }
     loadCounts();
   }, []);
+
+  // Load team members
+  useEffect(() => {
+    async function loadTeam() {
+      setTeamLoading(true);
+      const { data } = await supabase.from('team_members').select('*').order('sort_order');
+      setTeamMembers((data as TeamMember[]) || []);
+      setTeamLoading(false);
+    }
+    loadTeam();
+  }, []);
+
+  async function handleAvatarUpload(memberId: string, file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    setUploadingId(memberId);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const filePath = `team/${memberId}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      const avatar_url = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      const { error: dbError } = await supabase
+        .from('team_members')
+        .update({ avatar_url })
+        .eq('id', memberId);
+      if (dbError) throw dbError;
+
+      setTeamMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, avatar_url } : m));
+      toast.success('Photo updated');
+    } catch {
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploadingId(null);
+    }
+  }
 
   async function handleClearAll() {
     setShowClearConfirm(false);
@@ -222,7 +281,7 @@ export function SettingsPage() {
         ))}
       </div>
 
-      <div className="max-w-2xl space-y-4">
+      <div className="space-y-4">
         {/* General Tab */}
         {activeTab === 'general' && (
           <>
@@ -384,59 +443,130 @@ export function SettingsPage() {
 
         {/* About Tab */}
         {activeTab === 'about' && (
-          <>
-            <div className={sectionCls}>
-              <div className={sectionHeaderCls}>
-                <Info size={14} className="text-[#5B9BD5]" />
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Left column — System Info + DB */}
+            <div className="flex-1 min-w-0 space-y-4">
+              <div className={sectionCls}>
+                <div className={sectionHeaderCls}>
+                  <Info size={14} className="text-[#5B9BD5]" />
+                  <div>
+                    <p className={sectionTitleCls}>System Information</p>
+                    <p className={sectionDescCls}>Dashboard version and platform details</p>
+                  </div>
+                </div>
                 <div>
-                  <p className={sectionTitleCls}>System Information</p>
-                  <p className={sectionDescCls}>Dashboard version and platform details</p>
+                  {[
+                    { label: 'Application', value: 'POS Dashboard' },
+                    { label: 'Version', value: '1.0.0' },
+                    { label: 'Platform', value: 'Web Application' },
+                    { label: 'Framework', value: 'React 18' },
+                    { label: 'Backend', value: 'Supabase' },
+                    { label: 'Currency', value: 'PHP (Philippine Peso)' },
+                  ].map((item) => (
+                    <div key={item.label} className={itemCls}>
+                      <span className="text-[10px] text-[#8FAABE]/60">{item.label}</span>
+                      <span className="text-xs text-[#E8EDF2]">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div>
-                {[
-                  { label: 'Application', value: 'POS Dashboard' },
-                  { label: 'Version', value: '1.0.0' },
-                  { label: 'Platform', value: 'Web Application' },
-                  { label: 'Framework', value: 'React 18' },
-                  { label: 'Backend', value: 'Supabase' },
-                  { label: 'Currency', value: 'PHP (Philippine Peso)' },
-                ].map((item) => (
-                  <div key={item.label} className={itemCls}>
-                    <span className="text-[10px] text-[#8FAABE]/60">{item.label}</span>
-                    <span className="text-xs text-[#E8EDF2]">{item.value}</span>
+
+              {/* Database Overview */}
+              <div className={sectionCls}>
+                <div className={sectionHeaderCls}>
+                  <Database size={14} className="text-[#5B9BD5]" />
+                  <div>
+                    <p className={sectionTitleCls}>Database Overview</p>
+                    <p className={sectionDescCls}>Record counts across all tables</p>
                   </div>
-                ))}
+                </div>
+                <div className="p-4 grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Orders', count: systemInfo.orderCount, icon: ShoppingCart },
+                    { label: 'Products', count: systemInfo.productCount, icon: Package },
+                    { label: 'Users', count: systemInfo.userCount, icon: Users },
+                    { label: 'Stores', count: systemInfo.storeCount, icon: MapPin },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-[#0D1F33] rounded-lg p-3 border border-[#1E3F5E]/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <item.icon size={12} className="text-[#5B9BD5]" />
+                        <span className="text-[10px] text-[#8FAABE]/50">{item.label}</span>
+                      </div>
+                      <p className="text-sm font-bold text-[#E8EDF2] tabular-nums">{item.count.toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Database Overview */}
-            <div className={sectionCls}>
-              <div className={sectionHeaderCls}>
-                <Database size={14} className="text-[#5B9BD5]" />
-                <div>
-                  <p className={sectionTitleCls}>Database Overview</p>
-                  <p className={sectionDescCls}>Record counts across all tables</p>
+            {/* Right column — Team */}
+            <div className="lg:w-[320px] flex-shrink-0">
+              <div className={sectionCls}>
+                <div className={sectionHeaderCls}>
+                  <Users size={14} className="text-[#5B9BD5]" />
+                  <div>
+                    <p className={sectionTitleCls}>Researchers & Developers</p>
+                    <p className={sectionDescCls}>The team behind this system</p>
+                  </div>
+                </div>
+                <div className="p-4 space-y-4">
+                  {teamLoading ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 size={18} className="animate-spin text-[#5B9BD5]" />
+                    </div>
+                  ) : teamMembers.length === 0 ? (
+                    <p className="text-[10px] text-[#8FAABE]/40 text-center py-6">
+                      No team members yet. Add them via the database.
+                    </p>
+                  ) : (
+                    teamMembers.map((member) => (
+                      <div key={member.id} className="flex items-center gap-3">
+                        <div className="relative flex-shrink-0 group">
+                          {member.avatar_url ? (
+                            <img
+                              src={member.avatar_url}
+                              alt={member.name}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-[#1E3F5E]/60"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-[#0D1F33] border-2 border-[#1E3F5E]/60 flex items-center justify-center">
+                              <UserCircle size={24} className="text-[#8FAABE]/30" />
+                            </div>
+                          )}
+                          <button
+                            onClick={() => fileInputRefs.current[member.id]?.click()}
+                            disabled={uploadingId === member.id}
+                            className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                          >
+                            {uploadingId === member.id ? (
+                              <Loader2 size={14} className="animate-spin text-white" />
+                            ) : (
+                              <Camera size={14} className="text-white" />
+                            )}
+                          </button>
+                          <input
+                            ref={(el) => { fileInputRefs.current[member.id] = el; }}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleAvatarUpload(member.id, file);
+                              e.target.value = '';
+                            }}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#E8EDF2] truncate">{member.name}</p>
+                          <p className="text-[10px] text-[#8FAABE]/50 truncate">{member.role}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-              <div className="p-4 grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Orders', count: systemInfo.orderCount, icon: ShoppingCart },
-                  { label: 'Products', count: systemInfo.productCount, icon: Package },
-                  { label: 'Users', count: systemInfo.userCount, icon: Users },
-                  { label: 'Stores', count: systemInfo.storeCount, icon: MapPin },
-                ].map((item) => (
-                  <div key={item.label} className="bg-[#0D1F33] rounded-lg p-3 border border-[#1E3F5E]/30">
-                    <div className="flex items-center gap-2 mb-1">
-                      <item.icon size={12} className="text-[#5B9BD5]" />
-                      <span className="text-[10px] text-[#8FAABE]/50">{item.label}</span>
-                    </div>
-                    <p className="text-sm font-bold text-[#E8EDF2] tabular-nums">{item.count.toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
             </div>
-          </>
+          </div>
         )}
       </div>
 
