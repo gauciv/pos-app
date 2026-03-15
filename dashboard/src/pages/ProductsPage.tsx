@@ -1,12 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Pencil, Trash2, Package } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Package, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatters';
 import type { Product } from '@/types';
 import toast from 'react-hot-toast';
+
+type StatusTab = 'all' | 'active' | 'inactive';
+type StockFilter = 'all' | 'in_stock' | 'low' | 'out';
+type SortField = 'name' | 'price' | 'stock_quantity' | 'created_at';
+type SortDir = 'asc' | 'desc';
+
+const statusTabs: { key: StatusTab; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
+  { key: 'inactive', label: 'Inactive' },
+];
+
+const stockOptions: { key: StockFilter; label: string }[] = [
+  { key: 'all', label: 'All stock' },
+  { key: 'in_stock', label: 'In stock' },
+  { key: 'low', label: 'Low (1-10)' },
+  { key: 'out', label: 'Out of stock' },
+];
 
 function StockBadge({ qty }: { qty: number }) {
   const cls =
@@ -16,7 +34,7 @@ function StockBadge({ qty }: { qty: number }) {
       ? 'bg-[#E5C07B]/10 text-[#E5C07B]'
       : 'bg-[#98C379]/10 text-[#98C379]';
   return (
-    <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', cls)}>
+    <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium tabular-nums', cls)}>
       {qty}
     </span>
   );
@@ -37,14 +55,52 @@ export function ProductsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [statusTab, setStatusTab] = useState<StatusTab>('all');
+  const [stockFilter, setStockFilter] = useState<StockFilter>('all');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   useEffect(() => {
-    fetchProducts({ page, search: search || undefined });
-  }, [page, search, fetchProducts]);
+    fetchProducts({
+      page,
+      search: search || undefined,
+      isActive: statusTab === 'all' ? undefined : statusTab === 'active',
+      sortField,
+      sortDir,
+      stockFilter,
+    });
+  }, [page, search, statusTab, stockFilter, sortField, sortDir, fetchProducts]);
 
   function handleSearch(value: string) {
     setSearch(value);
     setPage(1);
+  }
+
+  function handleStatusTab(tab: StatusTab) {
+    setStatusTab(tab);
+    setPage(1);
+  }
+
+  function handleStockFilter(filter: StockFilter) {
+    setStockFilter(filter);
+    setPage(1);
+  }
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir(field === 'name' ? 'asc' : 'desc');
+    }
+    setPage(1);
+  }
+
+  function SortIcon({ column }: { column: SortField }) {
+    if (sortField !== column) return <ChevronDown size={12} className="text-[#8FAABE]/30 ml-0.5 inline" />;
+    return sortDir === 'asc'
+      ? <ChevronUp size={12} className="text-[#5B9BD5] ml-0.5 inline" />
+      : <ChevronDown size={12} className="text-[#5B9BD5] ml-0.5 inline" />;
   }
 
   function goToPage(newPage: number) {
@@ -65,29 +121,57 @@ export function ProductsPage() {
 
   return (
     <div className="p-3 bg-[#0D1F33] min-h-full">
-      <div className="flex items-center justify-end mb-3 gap-2 flex-wrap">
+      {/* Top bar: search + stock filter + add button */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8FAABE]/40" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search products..."
+            className="w-full pl-9 pr-3 py-2 text-xs border border-[#1E3F5E]/60 rounded-lg bg-[#162F4D] text-[#E8EDF2] placeholder-[#8FAABE]/40 focus:outline-none focus:ring-2 focus:ring-[#5B9BD5]"
+          />
+        </div>
+
+        <select
+          value={stockFilter}
+          onChange={(e) => handleStockFilter(e.target.value as StockFilter)}
+          className="text-xs bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg px-2 py-2 text-[#E8EDF2] focus:outline-none focus:ring-2 focus:ring-[#5B9BD5] cursor-pointer"
+        >
+          {stockOptions.map((opt) => (
+            <option key={opt.key} value={opt.key}>{opt.label}</option>
+          ))}
+        </select>
+
         <button
           onClick={() => navigate('/products/new')}
-          className="bg-[#5B9BD5] text-white text-xs px-3 py-1.5 rounded-md hover:bg-[#4A8BC4] flex items-center gap-1.5 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#5B9BD5] text-white rounded-lg hover:bg-[#4A8BC4] transition-colors"
         >
           <Plus size={13} />
           Add Product
         </button>
       </div>
 
-      <div className="bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg p-2 mb-3 flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[160px]">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8FAABE]/40" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search products..."
-            className="w-full pl-7 pr-3 border border-[#1E3F5E]/60 rounded-md py-1.5 text-xs bg-[#0D1F33] text-[#E8EDF2] placeholder-[#8FAABE]/40 focus:outline-none focus:ring-2 focus:ring-[#5B9BD5]"
-          />
-        </div>
+      {/* Status tabs */}
+      <div className="bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg p-2 mb-3 flex gap-1.5">
+        {statusTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => handleStatusTab(tab.key)}
+            className={cn(
+              'px-2.5 py-1 rounded text-xs font-medium transition-colors',
+              statusTab === tab.key
+                ? 'bg-[#5B9BD5] text-white'
+                : 'text-[#E8EDF2]/80 hover:bg-[#1A3755]'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
+      {/* Products table */}
       <div className="bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg overflow-hidden">
         {error ? (
           <div className="p-8 text-center">
@@ -96,10 +180,12 @@ export function ProductsPage() {
           </div>
         ) : loading ? (
           <div className="p-4 space-y-2">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="flex gap-3 animate-pulse py-1">
+                <div className="h-3 bg-[#1A3755] rounded w-16" />
                 <div className="h-3 bg-[#1A3755] rounded flex-1" />
                 <div className="h-3 bg-[#1A3755] rounded w-20" />
+                <div className="h-3 bg-[#1A3755] rounded w-12" />
                 <div className="h-3 bg-[#1A3755] rounded w-16" />
               </div>
             ))}
@@ -107,8 +193,12 @@ export function ProductsPage() {
         ) : products.length === 0 ? (
           <div className="py-16 text-center">
             <Package size={24} className="text-[#8FAABE]/30 mx-auto mb-2" />
-            <p className="text-xs text-[#8FAABE]/50">No products found</p>
-            <button onClick={() => navigate('/products/new')} className="mt-2 text-xs text-[#5B9BD5] hover:text-[#7EB8E0] font-medium">Add your first product</button>
+            <p className="text-xs text-[#8FAABE]/50">
+              {search ? 'No products match your search' : stockFilter !== 'all' ? 'No products with this stock level' : 'No products found'}
+            </p>
+            {!search && stockFilter === 'all' && statusTab === 'all' && (
+              <button onClick={() => navigate('/products/new')} className="mt-2 text-xs text-[#5B9BD5] hover:text-[#7EB8E0] font-medium">Add your first product</button>
+            )}
           </div>
         ) : (
           <>
@@ -117,24 +207,36 @@ export function ProductsPage() {
                 <thead>
                   <tr className="border-b-2 border-[#1E3F5E]/60 bg-[#1A3755]/50">
                     <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider">SKU</th>
-                    <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider">Name</th>
-                    <th className="px-3 py-2.5 text-right text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider">Price</th>
-                    <th className="px-3 py-2.5 text-center text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider">Stock</th>
+                    <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('name')}>
+                      Name <SortIcon column="name" />
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider hidden md:table-cell">Category</th>
+                    <th className="px-3 py-2.5 text-right text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('price')}>
+                      Price <SortIcon column="price" />
+                    </th>
+                    <th className="px-3 py-2.5 text-center text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('stock_quantity')}>
+                      Stock <SortIcon column="stock_quantity" />
+                    </th>
                     <th className="px-3 py-2.5 text-center text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider">Status</th>
                     <th className="px-3 py-2.5 text-right text-[10px] font-semibold text-[#8FAABE]/60 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product, i) => (
+                  {products.map((product) => (
                     <tr
                       key={product.id}
-                      className={cn(
-                        'border-b border-[#1E3F5E]/30 transition-colors hover:bg-[#1A3755]/40',
-                        i % 2 === 1 ? 'bg-[#0D1F33]/30' : ''
-                      )}
+                      tabIndex={0}
+                      className="border-b border-[#1E3F5E]/30 transition-colors hover:bg-[#1A3755]/40 cursor-pointer focus:outline-none focus-visible:bg-[#1A3755]/60"
+                      onClick={() => navigate(`/products/${product.id}/edit`)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/products/${product.id}/edit`); }}
                     >
                       <td className="px-3 py-2 text-[10px] font-mono text-[#8FAABE]/50">{product.sku || '—'}</td>
-                      <td className="px-3 py-2"><p className="text-xs text-[#E8EDF2] font-medium">{product.name}</p></td>
+                      <td className="px-3 py-2">
+                        <p className="text-xs text-[#E8EDF2] font-medium">{product.name}</p>
+                      </td>
+                      <td className="px-3 py-2 hidden md:table-cell">
+                        <span className="text-[10px] text-[#8FAABE]/50">{product.categories?.name || '—'}</span>
+                      </td>
                       <td className="px-3 py-2 text-xs font-semibold text-[#E8EDF2] text-right font-mono tabular-nums">{formatCurrency(product.price)}</td>
                       <td className="px-3 py-2 text-center"><StockBadge qty={product.stock_quantity} /></td>
                       <td className="px-3 py-2 text-center">
@@ -143,9 +245,10 @@ export function ProductsPage() {
                         </span>
                       </td>
                       <td className="px-3 py-2 text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           <button onClick={() => navigate(`/products/${product.id}/edit`)} className="text-[#8FAABE]/40 hover:text-[#5B9BD5] transition-colors" title="Edit product"><Pencil size={13} /></button>
                           <button onClick={() => setDeleteTarget(product)} className="text-[#8FAABE]/40 hover:text-[#E06C75] transition-colors" title="Delete product"><Trash2 size={13} /></button>
+                          <ChevronRight size={14} className="text-[#8FAABE]/20" />
                         </div>
                       </td>
                     </tr>
@@ -154,13 +257,16 @@ export function ProductsPage() {
               </table>
             </div>
 
-            <div className="flex items-center justify-between px-3 py-2 border-t border-[#1E3F5E]/60 text-xs text-[#8FAABE]/50">
-              <span>{total} products</span>
-              <div className="flex items-center gap-2">
-                <button onClick={() => goToPage(page - 1)} disabled={page === 1} className="px-2 py-1 rounded border border-[#1E3F5E]/60 text-[#8FAABE]/70 hover:bg-[#1A3755] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← Prev</button>
-                <span className="text-[#8FAABE]/70">Page {page} of {totalPages}</span>
-                <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className="px-2 py-1 rounded border border-[#1E3F5E]/60 text-[#8FAABE]/70 hover:bg-[#1A3755] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next →</button>
-              </div>
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-3 py-2 border-t border-[#1E3F5E]/60 bg-[#1A3755]/50">
+              <span className="text-[10px] text-[#8FAABE]/50 tabular-nums">{total} product{total !== 1 ? 's' : ''}</span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button onClick={() => goToPage(page - 1)} disabled={page === 1} className="text-[10px] px-2 py-0.5 rounded border border-[#1E3F5E]/60 text-[#8FAABE]/70 hover:bg-[#162F4D] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Prev</button>
+                  <span className="text-[10px] text-[#8FAABE]/50 tabular-nums px-1">Page {page} of {totalPages}</span>
+                  <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className="text-[10px] px-2 py-0.5 rounded border border-[#1E3F5E]/60 text-[#8FAABE]/70 hover:bg-[#162F4D] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
+                </div>
+              )}
             </div>
           </>
         )}

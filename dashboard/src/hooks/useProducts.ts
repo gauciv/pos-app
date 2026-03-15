@@ -4,10 +4,17 @@ import type { Product } from '@/types';
 
 const PAGE_SIZE = 20;
 
+type SortField = 'name' | 'price' | 'stock_quantity' | 'created_at';
+type SortDir = 'asc' | 'desc';
+type StockFilter = 'all' | 'in_stock' | 'low' | 'out';
+
 interface FetchProductsParams {
   page?: number;
   search?: string;
   isActive?: boolean;
+  sortField?: SortField;
+  sortDir?: SortDir;
+  stockFilter?: StockFilter;
 }
 
 export function useProducts() {
@@ -18,7 +25,14 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = useCallback(async ({ page: pageNum = 1, search, isActive }: FetchProductsParams = {}) => {
+  const fetchProducts = useCallback(async ({
+    page: pageNum = 1,
+    search,
+    isActive,
+    sortField = 'name',
+    sortDir = 'asc',
+    stockFilter = 'all',
+  }: FetchProductsParams = {}) => {
     setLoading(true);
     setError(null);
     try {
@@ -32,7 +46,12 @@ export function useProducts() {
       if (search) query = query.ilike('name', `%${search}%`);
       if (isActive !== undefined) query = query.eq('is_active', isActive);
 
-      query = query.order('name').range(from, to);
+      // Stock filter
+      if (stockFilter === 'out') query = query.lte('stock_quantity', 0);
+      else if (stockFilter === 'low') query = query.gt('stock_quantity', 0).lte('stock_quantity', 10);
+      else if (stockFilter === 'in_stock') query = query.gt('stock_quantity', 10);
+
+      query = query.order(sortField, { ascending: sortDir === 'asc' }).range(from, to);
 
       const { data, count, error: err } = await query;
       if (err) throw err;
