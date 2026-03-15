@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { LogOut, Menu, ChevronDown, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { usePageLabel } from '@/components/Sidebar';
 
 function LiveClock() {
   const [now, setNow] = useState(() => new Date());
@@ -42,6 +43,7 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
+  const pageLabel = usePageLabel();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -54,7 +56,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className="bg-gradient-to-r from-[#0A2040] to-[#0D2B52] border-b border-white/10 px-4 h-10 flex items-center justify-between flex-shrink-0">
+    <header className="bg-gradient-to-r from-[#061528] to-[#0A2040] border-b border-white/10 px-3 h-10 flex items-center justify-between flex-shrink-0">
       <div className="flex items-center gap-3">
         {isMobile && (
           <button
@@ -64,6 +66,13 @@ export function Header() {
             <Menu size={18} />
           </button>
         )}
+        {/* Brand + Page label */}
+        <div className="flex items-center gap-2.5">
+          <img src="/logo.png" alt="Gels" className="w-6 h-6 rounded-full object-cover" />
+          <span className="text-sm font-bold text-white tracking-tight">Gels Consumer Good Trading</span>
+          <div className="h-4 w-px bg-white/15" />
+          <span className="text-sm text-blue-200/70">{pageLabel}</span>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         {!isDashboard && (

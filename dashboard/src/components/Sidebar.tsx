@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -47,10 +47,21 @@ const navGroups = [
   },
 ];
 
+const pageLabels: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/orders': 'Orders',
+  '/forecast': 'Forecast',
+  '/analytics': 'Analytics',
+  '/products': 'Products',
+  '/users': 'Users',
+  '/company': 'Company',
+  '/settings': 'Settings',
+};
+
 const modeOptions: { mode: SidebarMode; icon: React.ElementType; label: string }[] = [
-  { mode: 'hover', icon: MousePointerClick, label: 'Hover' },
-  { mode: 'expanded', icon: PanelLeft, label: 'Pinned' },
-  { mode: 'collapsed', icon: PanelLeftClose, label: 'Mini' },
+  { mode: 'hover', icon: MousePointerClick, label: 'Hover expand' },
+  { mode: 'expanded', icon: PanelLeft, label: 'Expanded' },
+  { mode: 'collapsed', icon: PanelLeftClose, label: 'Collapsed' },
 ];
 
 export function Sidebar() {
@@ -61,7 +72,7 @@ export function Sidebar() {
 
   const sidebarContent = (
     <>
-      {/* Logo / Brand */}
+      {/* Logo */}
       <div
         className={cn(
           'flex items-center mb-6',
@@ -70,19 +81,15 @@ export function Sidebar() {
       >
         {showExpanded && (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-              <ShoppingCart size={14} className="text-white" />
-            </div>
+            <img src="/logo.png" alt="Gels" className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-white leading-tight tracking-tight">POS Admin</h1>
-              <p className="text-[10px] text-blue-200/50 leading-tight">Order Management</p>
+              <h1 className="text-sm font-bold text-white leading-tight tracking-tight truncate">Gels Consumer</h1>
+              <p className="text-[10px] text-blue-200/50 leading-tight">Good Trading</p>
             </div>
           </div>
         )}
         {isCollapsed && (
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <ShoppingCart size={14} className="text-white" />
-          </div>
+          <img src="/logo.png" alt="Gels" className="w-8 h-8 rounded-full object-cover" />
         )}
         {isMobile && (
           <button onClick={close} className="p-1.5 text-blue-200/50 hover:text-white rounded-md hover:bg-white/10 transition-colors">
@@ -114,7 +121,7 @@ export function Sidebar() {
                       isCollapsed ? 'justify-center' : '',
                       isActive
                         ? 'bg-primary text-white shadow-sm'
-                        : 'text-blue-200/70 hover:bg-white/8 hover:text-white'
+                        : 'text-blue-200/70 hover:bg-primary/20 hover:text-white'
                     )
                   }
                   title={isCollapsed ? item.label : undefined}
@@ -135,47 +142,30 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Mode toggle (desktop only) */}
+      {/* Mode toggle (desktop only) — icon-only with tooltips */}
       {!isMobile && (
         <div className="mt-4 pt-3 border-t border-white/10">
-          {showExpanded ? (
-            <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5">
-              {modeOptions.map(({ mode: m, icon: Icon, label }) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-medium transition-colors',
-                    mode === m
-                      ? 'bg-white/15 text-white'
-                      : 'text-blue-300/40 hover:text-white'
-                  )}
-                  title={label}
-                >
-                  <Icon size={12} />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-1">
-              {modeOptions.map(({ mode: m, icon: Icon, label }) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={cn(
-                    'w-8 h-8 rounded-md flex items-center justify-center transition-colors',
-                    mode === m
-                      ? 'bg-white/15 text-white'
-                      : 'text-blue-300/40 hover:text-white hover:bg-white/10'
-                  )}
-                  title={label}
-                >
-                  <Icon size={14} />
-                </button>
-              ))}
-            </div>
-          )}
+          <div className={cn(
+            'flex items-center gap-1 bg-white/5 rounded-md p-0.5',
+            isCollapsed ? 'flex-col' : 'flex-row'
+          )}>
+            {modeOptions.map(({ mode: m, icon: Icon, label }) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={cn(
+                  'flex items-center justify-center rounded-md transition-colors',
+                  isCollapsed ? 'w-8 h-8' : 'flex-1 py-1.5',
+                  mode === m
+                    ? 'bg-white/15 text-white'
+                    : 'text-blue-300/40 hover:text-white'
+                )}
+                title={label}
+              >
+                <Icon size={14} />
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </>
@@ -223,4 +213,11 @@ export function Sidebar() {
       </aside>
     </>
   );
+}
+
+/** Returns the page label for the current path */
+export function usePageLabel() {
+  const location = useLocation();
+  const base = '/' + location.pathname.split('/')[1];
+  return pageLabels[base] || 'Dashboard';
 }
