@@ -1,9 +1,9 @@
 export const statusBadge: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  processing: 'bg-purple-100 text-purple-700',
-  completed: 'bg-emerald-100 text-emerald-700',
-  cancelled: 'bg-destructive/10 text-destructive',
+  pending: 'bg-[#E5C07B]/10 text-[#E5C07B]',
+  confirmed: 'bg-[#5B9BD5]/10 text-[#5B9BD5]',
+  processing: 'bg-[#C678DD]/10 text-[#C678DD]',
+  completed: 'bg-[#98C379]/10 text-[#98C379]',
+  cancelled: 'bg-[#E06C75]/10 text-[#E06C75]',
 };
 
 export const ACTIVE_STATUSES = ['pending', 'confirmed', 'processing', 'completed'];

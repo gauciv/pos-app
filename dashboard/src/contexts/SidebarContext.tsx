@@ -34,7 +34,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<SidebarMode>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'expanded' || saved === 'collapsed' || saved === 'hover') return saved;
-    return 'hover';
+    return 'expanded';
   });
   const [isHovered, setHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);

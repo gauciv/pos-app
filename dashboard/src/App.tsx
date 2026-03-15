@@ -16,15 +16,16 @@ import { CompanyProfilePage } from '@/pages/CompanyProfilePage';
 import { ForecastPage } from '@/pages/ForecastPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { AnalyticsPage } from '@/pages/AnalyticsPage';
+import { StoresPage } from '@/pages/StoresPage';
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 h-screen">
-          <Header />
-          <main className="flex-1 overflow-y-auto">{children}</main>
+      <div className="flex flex-col h-screen overflow-hidden bg-[#0D1F33]">
+        <Header />
+        <div className="flex flex-1 min-h-0">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto min-w-0">{children}</main>
         </div>
       </div>
     </SidebarProvider>
@@ -47,6 +48,7 @@ export default function App() {
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/orders/:id" element={<OrderDetailPage />} />
+                    <Route path="/stores" element={<StoresPage />} />
                     <Route path="/forecast" element={<ForecastPage />} />
                     <Route path="/analytics" element={<AnalyticsPage />} />
                     <Route path="/products" element={<ProductsPage />} />

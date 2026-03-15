@@ -26,7 +26,6 @@ export function OrdersPage() {
   async function handleDeleteOrder() {
     if (!deleteTarget) return;
     try {
-      // order_items cascade automatically via ON DELETE CASCADE
       const { error: err } = await supabase
         .from('orders')
         .delete()
@@ -62,7 +61,6 @@ export function OrdersPage() {
   const pagedOrders = filteredOrders.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
   const startIdx = (safePage - 1) * PAGE_SIZE;
 
-  // Reset page when filters change
   function handleStatusChange(status: string) {
     setStatusFilter(status);
     setPage(1);
@@ -73,25 +71,21 @@ export function OrdersPage() {
   }
 
   return (
-    <div className="p-3 bg-background min-h-full">
-      {/* Search + Status filter bar */}
+    <div className="p-3 bg-[#0D1F33] min-h-full">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8FAABE]/40" />
           <input
             type="text"
             placeholder="Search orders..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs border border-border rounded-lg bg-card focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring"
+            className="w-full pl-9 pr-3 py-2 text-xs border border-[#1E3F5E]/60 rounded-lg bg-[#162F4D] text-[#E8EDF2] placeholder-[#8FAABE]/40 focus:outline-none focus:ring-2 focus:ring-[#5B9BD5]"
           />
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-lg p-2 mb-3 flex gap-1.5 overflow-x-auto flex-wrap">
+      <div className="bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg p-2 mb-3 flex gap-1.5 overflow-x-auto flex-wrap">
         {statusFilters.map((status) => {
           const count = status === 'all' ? orders.length : orders.filter((o) => o.status === status).length;
           return (
@@ -101,17 +95,12 @@ export function OrdersPage() {
               className={cn(
                 'px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1',
                 statusFilter === status
-                  ? 'bg-primary text-white'
-                  : 'text-foreground/80 hover:bg-muted'
+                  ? 'bg-[#5B9BD5] text-white'
+                  : 'text-[#E8EDF2]/80 hover:bg-[#1A3755]'
               )}
             >
               <span className="capitalize">{status === 'all' ? 'All' : status}</span>
-              <span
-                className={cn(
-                  'text-[10px] px-1 rounded',
-                  statusFilter === status ? 'bg-white/20' : 'bg-background'
-                )}
-              >
+              <span className={cn('text-[10px] px-1 rounded', statusFilter === status ? 'bg-white/20' : 'bg-[#0D1F33]')}>
                 {count}
               </span>
             </button>
@@ -119,29 +108,26 @@ export function OrdersPage() {
         })}
       </div>
 
-      {/* Table card */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg overflow-hidden">
         {error ? (
           <div className="p-8 text-center">
-            <p className="text-xs text-red-500 mb-2">{error}</p>
-            <button onClick={refetch} className="text-xs text-primary hover:text-primary/80 font-medium">
-              Retry
-            </button>
+            <p className="text-xs text-[#E06C75] mb-2">{error}</p>
+            <button onClick={refetch} className="text-xs text-[#5B9BD5] hover:text-[#7EB8E0] font-medium">Retry</button>
           </div>
         ) : loading ? (
           <div className="p-4 space-y-2">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="flex gap-3 animate-pulse py-1">
-                <div className="h-3 bg-gray-200 rounded w-24" />
-                <div className="h-3 bg-gray-200 rounded flex-1" />
-                <div className="h-3 bg-gray-200 rounded w-16" />
-                <div className="h-3 bg-gray-200 rounded w-16" />
+                <div className="h-3 bg-[#1A3755] rounded w-24" />
+                <div className="h-3 bg-[#1A3755] rounded flex-1" />
+                <div className="h-3 bg-[#1A3755] rounded w-16" />
+                <div className="h-3 bg-[#1A3755] rounded w-16" />
               </div>
             ))}
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="py-16 text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#8FAABE]/50">
               {search ? 'No orders match your search' : 'No orders match this filter'}
             </p>
           </div>
@@ -149,62 +135,53 @@ export function OrdersPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-secondary">
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">#</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Order</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">Date/Time</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide hidden md:table-cell">Store</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:table-cell">Collector</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide"></th>
+                <tr className="border-b border-[#1E3F5E]/60 bg-[#1A3755]/50">
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide">#</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide">Order</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide hidden sm:table-cell">Date/Time</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide hidden md:table-cell">Store</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide hidden lg:table-cell">Collector</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide">Status</th>
+                  <th className="px-3 py-2 text-right text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide">Amount</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide"></th>
                 </tr>
               </thead>
               <tbody>
                 {pagedOrders.map((order, idx) => (
                   <tr
                     key={order.id}
-                    className="border-b border-muted hover:bg-secondary cursor-pointer transition-colors"
+                    className="border-b border-[#1E3F5E]/30 hover:bg-[#1A3755]/40 cursor-pointer transition-colors"
                     onClick={() => navigate(`/orders/${order.id}`)}
                   >
-                    <td className="px-3 py-2 text-xs text-muted-foreground">{startIdx + idx + 1}</td>
+                    <td className="px-3 py-2 text-xs text-[#8FAABE]/50">{startIdx + idx + 1}</td>
                     <td className="px-3 py-2">
-                      <p className="text-xs font-mono font-semibold text-foreground">
-                        {order.order_number}
-                      </p>
+                      <p className="text-xs font-mono font-semibold text-[#E8EDF2]">{order.order_number}</p>
                     </td>
-                    <td className="px-3 py-2 text-xs text-foreground/80 hidden sm:table-cell">
+                    <td className="px-3 py-2 text-xs text-[#8FAABE]/70 hidden sm:table-cell">
                       {format(new Date(order.created_at), 'MMM d, HH:mm')}
                     </td>
-                    <td className="px-3 py-2 text-xs text-foreground/80 hidden md:table-cell">
-                      {order.stores?.name || '—'}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-foreground/80 hidden lg:table-cell">
+                    <td className="px-3 py-2 text-xs text-[#8FAABE]/70 hidden md:table-cell">{order.stores?.name || '—'}</td>
+                    <td className="px-3 py-2 text-xs text-[#8FAABE]/70 hidden lg:table-cell">
                       {order.profiles?.nickname || order.profiles?.full_name || '—'}
                     </td>
                     <td className="px-3 py-2">
-                      <span
-                        className={cn(
-                          'px-1.5 py-0.5 rounded text-[10px] font-medium capitalize',
-                          statusBadge[order.status]
-                        )}
-                      >
+                      <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium capitalize', statusBadge[order.status])}>
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-xs font-semibold text-foreground text-right">
+                    <td className="px-3 py-2 text-xs font-semibold text-[#E8EDF2] text-right tabular-nums">
                       {formatCurrency(order.total_amount)}
                     </td>
                     <td className="px-3 py-2 text-center">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(order); }}
-                          className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
+                          className="p-1 text-[#8FAABE]/40 hover:text-[#E06C75] transition-colors"
                           title="Delete order"
                         >
                           <Trash2 size={13} />
                         </button>
-                        <ChevronRight size={14} className="text-muted-foreground" />
+                        <ChevronRight size={14} className="text-[#8FAABE]/30" />
                       </div>
                     </td>
                   </tr>
@@ -214,10 +191,9 @@ export function OrdersPage() {
           </div>
         )}
 
-        {/* Pagination footer */}
         {!loading && !error && filteredOrders.length > 0 && (
-          <div className="px-3 py-2 border-t border-border bg-secondary flex justify-between items-center">
-            <p className="text-[10px] text-muted-foreground">
+          <div className="px-3 py-2 border-t border-[#1E3F5E]/60 bg-[#1A3755]/50 flex justify-between items-center">
+            <p className="text-[10px] text-[#8FAABE]/50">
               Showing {startIdx + 1}–{Math.min(startIdx + PAGE_SIZE, filteredOrders.length)} of {filteredOrders.length}
             </p>
             {totalPages > 1 && (
@@ -225,17 +201,15 @@ export function OrdersPage() {
                 <button
                   disabled={safePage === 1}
                   onClick={() => setPage((p) => p - 1)}
-                  className="text-[10px] px-2 py-0.5 rounded border border-border text-foreground/80 hover:bg-card disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="text-[10px] px-2 py-0.5 rounded border border-[#1E3F5E]/60 text-[#8FAABE]/70 hover:bg-[#162F4D] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Prev
                 </button>
-                <span className="text-[10px] text-foreground/80">
-                  Page {safePage} of {totalPages}
-                </span>
+                <span className="text-[10px] text-[#8FAABE]/70">Page {safePage} of {totalPages}</span>
                 <button
                   disabled={safePage === totalPages}
                   onClick={() => setPage((p) => p + 1)}
-                  className="text-[10px] px-2 py-0.5 rounded border border-border text-foreground/80 hover:bg-card disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="text-[10px] px-2 py-0.5 rounded border border-[#1E3F5E]/60 text-[#8FAABE]/70 hover:bg-[#162F4D] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>

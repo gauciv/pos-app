@@ -5,8 +5,8 @@ import { ArrowLeft } from 'lucide-react';
 import type { Product } from '@/types';
 import toast from 'react-hot-toast';
 
-const inputCls = 'border border-input rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring w-full';
-const labelCls = 'block text-xs font-medium text-foreground/80 mb-1';
+const inputCls = 'border border-[#1E3F5E]/60 rounded-md px-2.5 py-1.5 text-xs bg-[#0D1F33] text-[#E8EDF2] placeholder-[#8FAABE]/40 focus:outline-none focus:ring-2 focus:ring-[#5B9BD5] w-full';
+const labelCls = 'block text-xs font-medium text-[#8FAABE]/70 mb-1';
 
 function generateSku(name: string): string {
   const prefix = name.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3).padEnd(3, 'X');
@@ -21,7 +21,6 @@ export function ProductEditPage() {
   const [loading, setLoading] = useState(!!id);
   const isEditing = !!id;
 
-  // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [sku, setSku] = useState('');
@@ -108,12 +107,12 @@ export function ProductEditPage() {
 
   if (loading) {
     return (
-      <div className="p-4 bg-background min-h-full">
-        <div className="bg-card border border-border rounded-lg p-6 max-w-2xl animate-pulse">
-          <div className="h-5 bg-gray-200 rounded w-32 mb-4" />
+      <div className="p-4 bg-[#0D1F33] min-h-full">
+        <div className="bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg p-6 max-w-2xl animate-pulse">
+          <div className="h-5 bg-[#1A3755] rounded w-32 mb-4" />
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-8 bg-gray-200 rounded" />
+              <div key={i} className="h-8 bg-[#1A3755] rounded" />
             ))}
           </div>
         </div>
@@ -122,128 +121,89 @@ export function ProductEditPage() {
   }
 
   return (
-    <div className="p-4 bg-background min-h-full">
+    <div className="p-4 bg-[#0D1F33] min-h-full">
       <div className="flex items-center gap-3 mb-3">
         <button
           onClick={() => navigate('/products')}
-          className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground transition-colors"
+          className="flex items-center gap-1 text-xs text-[#8FAABE]/70 hover:text-[#E8EDF2] transition-colors"
         >
           <ArrowLeft size={14} />
           Products
         </button>
-        <div className="h-3 w-px bg-border" />
-        <p className="text-sm font-semibold text-foreground">
+        <div className="h-3 w-px bg-[#1E3F5E]/60" />
+        <p className="text-sm font-semibold text-[#E8EDF2]">
           {isEditing ? `Edit: ${product?.name}` : 'New Product'}
         </p>
       </div>
 
-      <div className="bg-card border border-border rounded-lg p-5 max-w-2xl">
+      <div className="bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg p-5 max-w-2xl">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-xs text-red-600">
+          <div className="bg-[#E06C75]/10 border border-[#E06C75]/30 rounded-md p-3 mb-4 text-xs text-[#E06C75]">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
           <div>
             <label className={labelCls}>Product Name *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter product name"
-              className={inputCls}
-            />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter product name" className={inputCls} />
           </div>
 
-          {/* Description */}
           <div>
             <label className={labelCls}>Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description"
-              rows={3}
-              className={`${inputCls} resize-none`}
-            />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" rows={3} className={`${inputCls} resize-none`} />
           </div>
 
-          {/* SKU */}
           <div>
-            <label className={labelCls}>SKU <span className="text-muted-foreground font-normal">(auto-generated if blank)</span></label>
+            <label className={labelCls}>SKU <span className="text-[#8FAABE]/40 font-normal">(auto-generated if blank)</span></label>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="e.g. PRD-001"
-                className={inputCls}
-              />
+              <input type="text" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="e.g. PRD-001" className={inputCls} />
               <button
                 type="button"
                 onClick={() => setSku(generateSku(name || 'PRD'))}
-                className="shrink-0 border border-input text-foreground/80 text-xs px-2.5 py-1.5 rounded-md hover:bg-muted transition-colors whitespace-nowrap"
+                className="shrink-0 border border-[#1E3F5E]/60 text-[#8FAABE]/70 text-xs px-2.5 py-1.5 rounded-md hover:bg-[#1A3755] transition-colors whitespace-nowrap"
               >
                 Generate
               </button>
             </div>
           </div>
 
-          {/* Price + Stock */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Price *</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                className={inputCls}
-              />
+              <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Stock Qty</label>
-              <input
-                type="number"
-                min="0"
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(e.target.value)}
-                className={inputCls}
-                aria-label="Stock quantity"
-              />
+              <input type="number" min="0" value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)} className={inputCls} aria-label="Stock quantity" />
             </div>
           </div>
 
-          {/* Status */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="is_active"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="rounded border-input text-primary focus:ring-ring"
+              className="rounded border-[#1E3F5E]/60 text-[#5B9BD5] focus:ring-[#5B9BD5]"
             />
-            <label htmlFor="is_active" className="text-xs text-foreground/80 font-medium">
+            <label htmlFor="is_active" className="text-xs text-[#8FAABE]/70 font-medium">
               Active (visible to collectors)
             </label>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-2 border-t border-border">
+          <div className="flex gap-2 pt-2 border-t border-[#1E3F5E]/60">
             <button
               type="submit"
               disabled={submitting}
-              className="bg-primary text-white text-xs px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-60 font-medium"
+              className="bg-[#5B9BD5] text-white text-xs px-4 py-2 rounded-md hover:bg-[#4A8BC4] disabled:opacity-60 font-medium"
             >
               {submitting ? 'Saving...' : isEditing ? 'Update Product' : 'Create Product'}
             </button>
             <button
               type="button"
               onClick={() => navigate('/products')}
-              className="bg-card border border-input text-foreground/80 text-xs px-4 py-2 rounded-md hover:bg-muted"
+              className="bg-[#162F4D] border border-[#1E3F5E]/60 text-[#8FAABE]/70 text-xs px-4 py-2 rounded-md hover:bg-[#1A3755]"
             >
               Cancel
             </button>
