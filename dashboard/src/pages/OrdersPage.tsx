@@ -21,6 +21,7 @@ import {
   XCircle,
   RefreshCw,
   Package,
+  ArrowUpDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { statusBadge } from '@/lib/constants';
@@ -31,6 +32,7 @@ const CARD_PAGE_SIZE = 12;
 const TABLE_PAGE_SIZE = 20;
 
 type ViewMode = 'table' | 'card';
+type SortMode = 'newest' | 'oldest' | 'highest' | 'lowest';
 
 export function OrdersPage() {
   const navigate = useNavigate();
@@ -42,6 +44,8 @@ export function OrdersPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [filterOpen, setFilterOpen] = useState(false);
   const [collectorFilter, setCollectorFilter] = useState<string>('all');
+  const [storeFilter, setStoreFilter] = useState<string>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
@@ -87,6 +91,15 @@ export function OrdersPage() {
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [orders]);
 
+  const stores = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const o of orders) {
+      const name = o.stores?.name;
+      if (name && o.store_id) map.set(o.store_id, name);
+    }
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [orders]);
+
   const filteredOrders = useMemo(() => {
     let result = orders;
 
@@ -108,6 +121,11 @@ export function OrdersPage() {
       result = result.filter((o) => o.collector_id === collectorFilter);
     }
 
+    // Store filter
+    if (storeFilter !== 'all') {
+      result = result.filter((o) => o.store_id === storeFilter);
+    }
+
     // Search
     if (search) {
       const q = search.toLowerCase();
@@ -119,8 +137,23 @@ export function OrdersPage() {
       );
     }
 
+    // Sort
+    result = [...result].sort((a, b) => {
+      switch (sortMode) {
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'highest':
+          return b.total_amount - a.total_amount;
+        case 'lowest':
+          return a.total_amount - b.total_amount;
+        case 'newest':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
     return result;
-  }, [orders, statusFilter, search, selectedDate, collectorFilter]);
+  }, [orders, statusFilter, search, selectedDate, collectorFilter, storeFilter, sortMode]);
 
   // Counts per status (within current date)
   const statusCounts = useMemo(() => {
@@ -232,7 +265,7 @@ export function OrdersPage() {
     : format(selectedDate, 'EEEE, d MMM yyyy');
 
   const isFuture = startOfDay(addDays(new Date(), 1)) <= startOfDay(selectedDate);
-  const activeFilterCount = (collectorFilter !== 'all' ? 1 : 0);
+  const activeFilterCount = (collectorFilter !== 'all' ? 1 : 0) + (storeFilter !== 'all' ? 1 : 0);
 
   // Get item summary for card tooltip
   function itemsSummary(order: Order): string {
@@ -283,6 +316,23 @@ export function OrdersPage() {
           {filterOpen && (
             <div className="absolute top-full right-0 mt-1 w-64 bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg shadow-xl z-50 p-3 animate-in fade-in slide-in-from-top-1 duration-150">
               <p className="text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide mb-2">
+                Store
+              </p>
+              <select
+                value={storeFilter}
+                onChange={(e) => {
+                  setStoreFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full text-xs bg-[#0D1F33] border border-[#1E3F5E]/60 rounded px-2 py-1.5 text-[#E8EDF2] focus:outline-none focus:ring-1 focus:ring-[#5B9BD5] mb-3"
+              >
+                <option value="all">All stores</option>
+                {stores.map(([id, name]) => (
+                  <option key={id} value={id}>{name}</option>
+                ))}
+              </select>
+
+              <p className="text-[10px] font-medium text-[#8FAABE]/60 uppercase tracking-wide mb-2">
                 Collector / Cashier
               </p>
               <select
@@ -303,15 +353,31 @@ export function OrdersPage() {
                 <button
                   onClick={() => {
                     setCollectorFilter('all');
+                    setStoreFilter('all');
                     setPage(1);
                   }}
                   className="mt-2 text-[10px] text-[#E06C75] hover:text-[#E06C75]/80 font-medium"
                 >
-                  Clear filters
+                  Clear all filters
                 </button>
               )}
             </div>
           )}
+        </div>
+
+        {/* Sort dropdown */}
+        <div className="flex items-center gap-1.5">
+          <ArrowUpDown size={13} className="text-[#8FAABE]/40" />
+          <select
+            value={sortMode}
+            onChange={(e) => { setSortMode(e.target.value as SortMode); setPage(1); }}
+            className="text-xs bg-[#162F4D] border border-[#1E3F5E]/60 rounded-lg px-2 py-2 text-[#E8EDF2] focus:outline-none focus:ring-2 focus:ring-[#5B9BD5] cursor-pointer"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="highest">Highest amount</option>
+            <option value="lowest">Lowest amount</option>
+          </select>
         </div>
 
         {/* View toggle */}

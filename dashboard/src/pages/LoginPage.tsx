@@ -1,8 +1,10 @@
 import { useState, FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Eye, EyeOff, AlertCircle, ShieldAlert, Loader2, ShoppingCart } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, ShieldAlert, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import authIllustration from '@/assets/auth-illustration.png';
+
+const LOGO_URL = '/logo.png';
 
 export function LoginPage() {
   const { signIn, isAuthenticated, isLoading, user } = useAuth();
@@ -84,16 +86,15 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Brand */}
           <div className="flex items-center gap-2.5 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-[#5B9BD5] flex items-center justify-center shadow-lg shadow-[#5B9BD5]/25">
-              <ShoppingCart size={18} className="text-white" />
-            </div>
+            <img
+              src={LOGO_URL}
+              alt="Gels Consumer Goods Trading"
+              className="w-9 h-9 rounded-xl object-contain shadow-lg"
+            />
             <div>
               <h1 className="text-lg font-bold text-[#E8EDF2] leading-tight">
-                POS Admin
+                Gels Consumer Goods Trading
               </h1>
-              <p className="text-[11px] text-[#8FAABE]/50 leading-tight">
-                Order Management System
-              </p>
             </div>
           </div>
 
