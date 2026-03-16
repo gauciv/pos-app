@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -66,25 +67,35 @@ export default function ActivationScreen() {
       <View className="flex-1 justify-center items-center px-4">
         <View style={isTablet ? { maxWidth: 420, width: '100%' } : { width: '100%' }}>
 
-          {/* GELS Gradient Label */}
-          <View className="items-center mb-2">
-            <MaskedView
-              maskElement={
-                <Text style={{ fontSize: 52, fontWeight: '900', backgroundColor: 'transparent', textAlign: 'center' }}>
-                  GELS
-                </Text>
-              }
-            >
-              <LinearGradient
-                colors={['#FFFFFF', '#74A7E6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+          {/* Header: Logo + Brand */}
+          <View className="flex-row items-center justify-center mb-2 gap-3">
+            <Image
+              source={require('../assets/gels-logo.png')}
+              style={{ width: 56, height: 56 }}
+              resizeMode="contain"
+            />
+            <View>
+              <MaskedView
+                maskElement={
+                  <Text style={{ fontSize: 36, fontWeight: '900', backgroundColor: 'transparent' }}>
+                    GELS
+                  </Text>
+                }
               >
-                <Text style={{ fontSize: 52, fontWeight: '900', opacity: 0, textAlign: 'center' }}>
-                  GELS
-                </Text>
-              </LinearGradient>
-            </MaskedView>
+                <LinearGradient
+                  colors={['#FFFFFF', '#74A7E6']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={{ fontSize: 36, fontWeight: '900', opacity: 0 }}>
+                    GELS
+                  </Text>
+                </LinearGradient>
+              </MaskedView>
+              <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: '600', letterSpacing: 0.5 }}>
+                Consumer Goods Trading
+              </Text>
+            </View>
           </View>
           <Text style={{ color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginBottom: 36, fontSize: 14 }}>
             Activate your collector account

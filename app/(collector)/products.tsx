@@ -228,9 +228,10 @@ export default function ProductsScreen() {
                 <TouchableOpacity
                   onPress={prevPage}
                   disabled={page === 1}
-                  className={page === 1 ? 'opacity-30' : 'opacity-100'}
+                  className={`flex-row items-center gap-1 ${page === 1 ? 'opacity-30' : 'opacity-100'}`}
                 >
-                  <Text className="text-sm font-medium text-blue-500">← Prev</Text>
+                  <Ionicons name="chevron-back" size={16} color="#3b82f6" />
+                  <Text className="text-sm font-medium text-blue-500">Prev</Text>
                 </TouchableOpacity>
                 <View className="items-center">
                   <Text className="text-sm font-medium text-gray-700">
@@ -241,9 +242,10 @@ export default function ProductsScreen() {
                 <TouchableOpacity
                   onPress={nextPage}
                   disabled={page >= totalPages}
-                  className={page >= totalPages ? 'opacity-30' : 'opacity-100'}
+                  className={`flex-row items-center gap-1 ${page >= totalPages ? 'opacity-30' : 'opacity-100'}`}
                 >
-                  <Text className="text-sm font-medium text-blue-500">Next →</Text>
+                  <Text className="text-sm font-medium text-blue-500">Next</Text>
+                  <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
                 </TouchableOpacity>
               </View>
             ) : null
