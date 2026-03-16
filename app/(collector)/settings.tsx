@@ -19,7 +19,7 @@ const RESEARCHERS = [
 
 const DEVELOPERS = [
   'Jonna Bohol',
-  'Vincent August',
+  'Vincent Augusto',
 ];
 
 export default function SettingsScreen() {

@@ -142,22 +142,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Mark device as connected after successful auth
     if (currentSession && user_id) {
-      await supabase
-        .from('profiles')
-        .update({ device_connected_at: new Date().toISOString() })
-        .eq('id', user_id)
-        .catch(() => {});
+      try {
+        await supabase
+          .from('profiles')
+          .update({ device_connected_at: new Date().toISOString() })
+          .eq('id', user_id);
+      } catch {
+        // ignore
+      }
     }
   }
 
   async function signOut() {
     // Mark device as disconnected before signing out
     if (session?.user?.id) {
-      await supabase
-        .from('profiles')
-        .update({ device_connected_at: null, last_seen_at: null })
-        .eq('id', session.user.id)
-        .catch(() => {});
+      try {
+        await supabase
+          .from('profiles')
+          .update({ device_connected_at: null, last_seen_at: null })
+          .eq('id', session.user.id);
+      } catch {
+        // ignore — sign out regardless
+      }
     }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;

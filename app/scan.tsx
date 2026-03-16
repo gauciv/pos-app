@@ -119,51 +119,54 @@ export default function ScanScreen() {
         </View>
       ) : null}
 
-      {/* Loading overlay */}
-      {loading ? (
-        <View className="bg-blue-50 border border-blue-200 rounded-lg p-3 mx-4 mb-4 flex-row items-center justify-center">
-          <ActivityIndicator size="small" color="#1060C0" />
-          <Text className="text-blue-600 text-sm ml-2">Activating...</Text>
-        </View>
-      ) : null}
-
-      {/* Camera */}
+      {/* Camera — unmounted during loading to prevent stale view reference crashes */}
       <View className="flex-1 justify-center">
-        <View
-          className="overflow-hidden rounded-xl mx-4"
-          style={{ height: isTablet ? 350 : 300 }}
-        >
-          <CameraView
-            style={{ flex: 1 }}
-            facing="back"
-            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-            onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-          />
-          <View
-            className="absolute inset-0 items-center justify-center"
-            pointerEvents="none"
-          >
-            <View
-              className="border-2 border-white rounded-lg"
-              style={{ width: 200, height: 200, opacity: 0.7 }}
-            />
+        {loading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#74A7E6" />
+            <Text style={{ color: 'rgba(255,255,255,0.6)' }} className="text-sm mt-4">
+              Activating account...
+            </Text>
           </View>
-        </View>
+        ) : (
+          <>
+            <View
+              className="overflow-hidden rounded-xl mx-4"
+              style={{ height: isTablet ? 350 : 300 }}
+            >
+              <CameraView
+                style={{ flex: 1 }}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+              />
+              <View
+                className="absolute inset-0 items-center justify-center"
+                pointerEvents="none"
+              >
+                <View
+                  className="border-2 border-white rounded-lg"
+                  style={{ width: 200, height: 200, opacity: 0.7 }}
+                />
+              </View>
+            </View>
 
-        <Text className="text-gray-500 text-sm text-center mt-4 px-4">
-          Point your camera at the QR code provided by your administrator
-        </Text>
+            <Text className="text-gray-500 text-sm text-center mt-4 px-4">
+              Point your camera at the QR code provided by your administrator
+            </Text>
 
-        {scanned && !loading && (
-          <TouchableOpacity
-            className="mx-4 mt-4 items-center py-3 bg-gray-100 rounded-lg"
-            onPress={() => {
-              setScanned(false);
-              setError('');
-            }}
-          >
-            <Text className="text-blue-500 font-medium">Tap to scan again</Text>
-          </TouchableOpacity>
+            {scanned && (
+              <TouchableOpacity
+                className="mx-4 mt-4 items-center py-3 bg-gray-100 rounded-lg"
+                onPress={() => {
+                  setScanned(false);
+                  setError('');
+                }}
+              >
+                <Text className="text-blue-500 font-medium">Tap to scan again</Text>
+              </TouchableOpacity>
+            )}
+          </>
         )}
       </View>
 
