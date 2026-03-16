@@ -121,24 +121,40 @@ export default function CartScreen() {
   // Empty state
   if (draftItems.length === 0) {
     return (
-      <View className="flex-1 bg-[#0D1F33] items-center justify-center px-4">
-        <Ionicons name="bag-outline" size={48} color="#8FAABE33" />
-        <Text className="text-[#8FAABE] text-lg font-medium mt-4">Your cart is empty</Text>
-        <Text className="text-[#8FAABE]/50 text-sm mt-1 text-center">
-          Browse products and add items to start your order
-        </Text>
-        <TouchableOpacity
-          className="mt-6 bg-[#5B9BD5] rounded-lg px-8 py-3"
-          onPress={() => router.back()}
-        >
-          <Text className="text-white font-semibold">Browse Products</Text>
-        </TouchableOpacity>
+      <View className="flex-1 bg-[#0D1F33]">
+        <View className="bg-[#152D4A] flex-row items-center px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2 mr-2">
+            <Ionicons name="arrow-back" size={22} color="#E8EDF2" />
+          </TouchableOpacity>
+          <Text className="text-base font-bold text-[#E8EDF2]">Checkout</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-4">
+          <Ionicons name="bag-outline" size={48} color="#8FAABE33" />
+          <Text className="text-[#8FAABE] text-lg font-medium mt-4">Your cart is empty</Text>
+          <Text className="text-[#8FAABE]/50 text-sm mt-1 text-center">
+            Browse products and add items to start your order
+          </Text>
+          <TouchableOpacity
+            className="mt-6 bg-[#5B9BD5] rounded-lg px-8 py-3"
+            onPress={() => router.back()}
+          >
+            <Text className="text-white font-semibold">Browse Products</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
     <View className="flex-1 bg-[#0D1F33]">
+      {/* Header */}
+      <View className="bg-[#152D4A] flex-row items-center px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2 mr-2">
+          <Ionicons name="arrow-back" size={22} color="#E8EDF2" />
+        </TouchableOpacity>
+        <Text className="text-base font-bold text-[#E8EDF2]">Checkout</Text>
+      </View>
+
       <ScrollView
         contentContainerStyle={{
           padding: 12,

@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -61,6 +62,14 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-[#0D1F33]">
+      {/* Header */}
+      <View className="bg-[#152D4A] flex-row items-center px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2 mr-2">
+          <Ionicons name="arrow-back" size={22} color="#E8EDF2" />
+        </TouchableOpacity>
+        <Text className="text-base font-bold text-[#E8EDF2]">Settings</Text>
+      </View>
+
       {/* Tab Switcher */}
       <View className="px-4 pt-3 pb-2 bg-[#162F4D] border-b border-[#1E3F5E]/30">
         <View className="flex-row bg-[#0D1F33] rounded-lg p-1 max-w-xs self-center">

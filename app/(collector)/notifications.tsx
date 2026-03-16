@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import type { Notification, NotificationType } from '@/types';
@@ -109,45 +110,51 @@ function NotificationRow({
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { notifications, loading, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-
-  if (loading) {
-    return (
-      <View className="flex-1 bg-[#0D1F33] items-center justify-center">
-        <ActivityIndicator size="large" color="#5B9BD5" />
-      </View>
-    );
-  }
-
-  if (notifications.length === 0) {
-    return (
-      <View className="flex-1 bg-[#0D1F33] items-center justify-center px-4">
-        <View className="w-16 h-16 bg-[#162F4D] rounded-full items-center justify-center mb-4">
-          <Ionicons name="notifications-outline" size={32} color="#8FAABE33" />
-        </View>
-        <Text className="text-[#8FAABE] text-base font-semibold">No notifications yet</Text>
-        <Text className="text-[#8FAABE]/50 text-sm mt-1 text-center">
-          You'll be notified about order updates, stock changes, and price changes.
-        </Text>
-      </View>
-    );
-  }
-
   const groups = groupByDay(notifications);
 
   return (
     <View className="flex-1 bg-[#0D1F33]">
-      {unreadCount > 0 && (
-        <View className="flex-row items-center justify-between px-4 py-2.5 bg-[#162F4D] border-b border-[#1E3F5E]/30">
-          <Text className="text-xs text-[#8FAABE]/60">
-            {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
-          </Text>
-          <TouchableOpacity onPress={markAllAsRead}>
-            <Text className="text-xs text-[#5B9BD5] font-semibold">Mark all as read</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Header */}
+      <View className="bg-[#152D4A] flex-row items-center px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2 mr-2">
+          <Ionicons name="arrow-back" size={22} color="#E8EDF2" />
+        </TouchableOpacity>
+        <Text className="text-base font-bold text-[#E8EDF2]">Notifications</Text>
+        {unreadCount > 0 && (
+          <View className="ml-2 bg-[#5B9BD5] rounded-full px-1.5 py-0.5">
+            <Text className="text-[10px] text-white font-bold">{unreadCount}</Text>
+          </View>
+        )}
+      </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+      {loading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#5B9BD5" />
+        </View>
+      ) : notifications.length === 0 ? (
+        <View className="flex-1 items-center justify-center px-4">
+          <View className="w-16 h-16 bg-[#162F4D] rounded-full items-center justify-center mb-4">
+            <Ionicons name="notifications-outline" size={32} color="#8FAABE33" />
+          </View>
+          <Text className="text-[#8FAABE] text-base font-semibold">No notifications yet</Text>
+          <Text className="text-[#8FAABE]/50 text-sm mt-1 text-center">
+            You'll be notified about order updates, stock changes, and price changes.
+          </Text>
+        </View>
+      ) : (
+        <>
+          {unreadCount > 0 && (
+            <View className="flex-row items-center justify-between px-4 py-2.5 bg-[#162F4D] border-b border-[#1E3F5E]/30">
+              <Text className="text-xs text-[#8FAABE]/60">
+                {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+              </Text>
+              <TouchableOpacity onPress={markAllAsRead}>
+                <Text className="text-xs text-[#5B9BD5] font-semibold">Mark all as read</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
         {groups.map(({ label, items }) => (
           <View key={label}>
             <View className="px-4 pt-4 pb-1">
@@ -166,6 +173,8 @@ export default function NotificationsScreen() {
           </View>
         ))}
       </ScrollView>
+        </>
+      )}
     </View>
   );
 }

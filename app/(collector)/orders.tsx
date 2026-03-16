@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getOrders } from '@/services/orders.service';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -169,6 +170,14 @@ export default function OrdersScreen() {
 
   return (
     <View className="flex-1 bg-[#0D1F33]">
+      {/* Header */}
+      <View className="bg-[#152D4A] flex-row items-center px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2 mr-2">
+          <Ionicons name="arrow-back" size={22} color="#E8EDF2" />
+        </TouchableOpacity>
+        <Text className="text-base font-bold text-[#E8EDF2]">Order History</Text>
+      </View>
+
       {/* Search bar */}
       <View className="bg-[#162F4D] px-3 pt-3 pb-2 border-b border-[#1E3F5E]/30">
         <View className="flex-row items-center bg-[#1A3755] rounded-lg px-3 py-2.5">

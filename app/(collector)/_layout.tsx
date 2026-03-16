@@ -20,19 +20,16 @@ export default function CollectorLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: '#152D4A' },
-        headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: 'bold' },
-        headerShadowVisible: false,
+        headerShown: false,
         contentStyle: { backgroundColor: '#0D1F33' },
       }}
     >
-      <Stack.Screen name="products" options={{ headerShown: false }} />
-      <Stack.Screen name="cart" options={{ title: 'Checkout' }} />
-      <Stack.Screen name="confirmation" options={{ headerShown: false }} />
-      <Stack.Screen name="orders" options={{ title: 'Order History' }} />
-      <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-      <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="products" />
+      <Stack.Screen name="cart" />
+      <Stack.Screen name="confirmation" />
+      <Stack.Screen name="orders" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="notifications" />
     </Stack>
   );
 }

@@ -24,7 +24,25 @@ import {
   Check,
   X,
   Plus,
+  GripVertical,
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useProducts } from '@/hooks/useProducts';
 import { useSidebar, SidebarMode } from '@/contexts/SidebarContext';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -125,6 +143,168 @@ interface TeamMember {
   sort_order: number;
 }
 
+interface SortableMemberCardProps {
+  member: TeamMember;
+  creditsEditMode: boolean;
+  editingId: string | null;
+  editName: string;
+  uploadingId: string | null;
+  deletingId: string | null;
+  onEditStart: (id: string, name: string) => void;
+  onEditCancel: () => void;
+  onEditNameChange: (name: string) => void;
+  onNameSave: (id: string) => void;
+  onAvatarUpload: (id: string, file: File) => void;
+  onRemoveAvatar: (id: string) => void;
+  onDelete: (id: string) => void;
+  fileInputRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
+}
+
+function SortableMemberCard({
+  member, creditsEditMode, editingId, editName, uploadingId, deletingId,
+  onEditStart, onEditCancel, onEditNameChange, onNameSave, onAvatarUpload, onRemoveAvatar, onDelete, fileInputRefs,
+}: SortableMemberCardProps) {
+  const isEditing = editingId === member.id;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: member.id,
+    disabled: !creditsEditMode,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-[#0D1F33] border border-[#1E3F5E]/30 rounded-xl p-5 flex flex-col items-center text-center relative group w-[180px]"
+    >
+      {/* Drag handle - only in edit mode */}
+      {creditsEditMode && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 left-1/2 -translate-x-1/2 p-1 cursor-grab active:cursor-grabbing text-[#8FAABE]/30 hover:text-[#8FAABE]/60 transition-colors"
+        >
+          <GripVertical size={12} />
+        </div>
+      )}
+
+      {/* Edit toggle - only in edit mode */}
+      {creditsEditMode && (
+        !isEditing ? (
+          <button
+            onClick={() => onEditStart(member.id, member.name)}
+            className="absolute top-2 right-2 p-1 rounded-md text-[#8FAABE]/30 hover:text-[#5B9BD5] hover:bg-[#1A3755] transition-all"
+            title="Edit"
+          >
+            <Pencil size={11} />
+          </button>
+        ) : (
+          <button
+            onClick={onEditCancel}
+            className="absolute top-2 right-2 p-1 rounded-md text-[#8FAABE]/40 hover:text-[#E06C75] hover:bg-[#E06C75]/10 transition-all"
+            title="Cancel"
+          >
+            <X size={11} />
+          </button>
+        )
+      )}
+
+      {/* Delete button - only in edit mode */}
+      {creditsEditMode && !isEditing && (
+        <button
+          onClick={() => onDelete(member.id)}
+          disabled={deletingId === member.id}
+          className="absolute top-2 left-2 p-1 rounded-md text-[#8FAABE]/30 hover:text-[#E06C75] hover:bg-[#E06C75]/10 transition-all disabled:opacity-40"
+          title="Remove"
+        >
+          {deletingId === member.id ? (
+            <Loader2 size={11} className="animate-spin" />
+          ) : (
+            <Trash2 size={11} />
+          )}
+        </button>
+      )}
+
+      {/* Avatar */}
+      <div className="relative flex-shrink-0 mb-4">
+        {member.avatar_url ? (
+          <img
+            src={member.avatar_url}
+            alt={member.name}
+            className="w-24 h-24 rounded-full object-cover border-2 border-[#1E3F5E]/60"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-[#162F4D] border-2 border-[#1E3F5E]/60 flex items-center justify-center">
+            <UserCircle size={44} className="text-[#8FAABE]/30" />
+          </div>
+        )}
+        {/* Upload overlay */}
+        {isEditing && (
+          <button
+            onClick={() => fileInputRefs.current[member.id]?.click()}
+            disabled={uploadingId === member.id}
+            className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center cursor-pointer transition-opacity"
+          >
+            {uploadingId === member.id ? (
+              <Loader2 size={20} className="animate-spin text-white" />
+            ) : (
+              <Camera size={20} className="text-white" />
+            )}
+          </button>
+        )}
+        {/* Remove photo button */}
+        {isEditing && member.avatar_url && (
+          <button
+            onClick={() => onRemoveAvatar(member.id)}
+            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#E06C75] flex items-center justify-center hover:bg-[#c75a63] transition-colors"
+            title="Remove photo"
+          >
+            <X size={10} className="text-white" />
+          </button>
+        )}
+        <input
+          ref={(el) => { fileInputRefs.current[member.id] = el; }}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onAvatarUpload(member.id, file);
+            e.target.value = '';
+          }}
+        />
+      </div>
+
+      {/* Name */}
+      {isEditing ? (
+        <div className="flex items-center gap-1 mb-1 w-full">
+          <input
+            value={editName}
+            onChange={(e) => onEditNameChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') onNameSave(member.id); if (e.key === 'Escape') onEditCancel(); }}
+            className="flex-1 min-w-0 bg-[#162F4D] border border-[#1E3F5E]/60 rounded px-2 py-1 text-xs text-[#E8EDF2] text-center outline-none focus:border-[#5B9BD5]"
+            autoFocus
+          />
+          <button
+            onClick={() => onNameSave(member.id)}
+            className="p-1 rounded text-[#98C379] hover:bg-[#98C379]/10 transition-colors flex-shrink-0"
+            title="Save"
+          >
+            <Check size={12} />
+          </button>
+        </div>
+      ) : (
+        <p className="text-sm font-semibold text-[#E8EDF2] truncate w-full">{member.name}</p>
+      )}
+      <p className="text-xs text-[#8FAABE]/50 truncate w-full mt-0.5">{member.role}</p>
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { total, clearAllProducts } = useProducts();
   const { mode, setMode } = useSidebar();
@@ -147,6 +327,12 @@ export function SettingsPage() {
   const [newMemberFile, setNewMemberFile] = useState<File | null>(null);
   const [newMemberPreview, setNewMemberPreview] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [creditsEditMode, setCreditsEditMode] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   function updateNotifPref(key: keyof NotifPrefs, value: boolean) {
     setNotifPrefs((prev) => {
@@ -285,6 +471,35 @@ export function SettingsPage() {
       toast.error('Failed to remove team member');
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleRemoveAvatar(memberId: string) {
+    try {
+      const { error } = await supabase.from('team_members').update({ avatar_url: null }).eq('id', memberId);
+      if (error) throw error;
+      setTeamMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, avatar_url: null } : m));
+      toast.success('Photo removed');
+    } catch {
+      toast.error('Failed to remove photo');
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = teamMembers.findIndex((m) => m.id === active.id);
+    const newIndex = teamMembers.findIndex((m) => m.id === over.id);
+    const reordered = arrayMove(teamMembers, oldIndex, newIndex);
+    setTeamMembers(reordered);
+    // Persist new sort_order
+    const updates = reordered.map((m, i) => ({ id: m.id, sort_order: i }));
+    try {
+      for (const u of updates) {
+        await supabase.from('team_members').update({ sort_order: u.sort_order }).eq('id', u.id);
+      }
+    } catch {
+      toast.error('Failed to save order');
     }
   }
 
@@ -582,12 +797,26 @@ export function SettingsPage() {
           <div className="space-y-4">
             {/* Team Members */}
           <div className={sectionCls}>
-            <div className={sectionHeaderCls}>
-              <Heart size={14} className="text-[#E06C75]" />
-              <div>
-                <p className={sectionTitleCls}>Researchers & Developers</p>
-                <p className={sectionDescCls}>The team behind this system</p>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E3F5E]/60">
+              <div className="flex items-center gap-2">
+                <Heart size={14} className="text-[#E06C75]" />
+                <div>
+                  <p className={sectionTitleCls}>Researchers & Developers</p>
+                  <p className={sectionDescCls}>The team behind this system</p>
+                </div>
               </div>
+              <button
+                onClick={() => { setCreditsEditMode(!creditsEditMode); setEditingId(null); }}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[10px] font-medium transition-colors',
+                  creditsEditMode
+                    ? 'bg-[#5B9BD5] text-white'
+                    : 'text-[#8FAABE]/50 hover:text-[#E8EDF2] hover:bg-[#1A3755]'
+                )}
+              >
+                <Pencil size={10} />
+                {creditsEditMode ? 'Done' : 'Edit'}
+              </button>
             </div>
             <div className="p-4">
               {teamLoading ? (
@@ -595,186 +824,103 @@ export function SettingsPage() {
                   <Loader2 size={18} className="animate-spin text-[#5B9BD5]" />
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-6">
-                  {teamMembers.map((member) => {
-                    const isEditing = editingId === member.id;
-                    return (
-                      <div key={member.id} className="bg-[#0D1F33] border border-[#1E3F5E]/30 rounded-xl p-5 flex flex-col items-center text-center relative group">
-                        {/* Edit toggle */}
-                        {!isEditing ? (
-                          <button
-                            onClick={() => { setEditingId(member.id); setEditName(member.name); }}
-                            className="absolute top-2 right-2 p-1 rounded-md text-[#8FAABE]/30 opacity-0 group-hover:opacity-100 hover:text-[#5B9BD5] hover:bg-[#1A3755] transition-all"
-                            title="Edit"
-                          >
-                            <Pencil size={11} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="absolute top-2 right-2 p-1 rounded-md text-[#8FAABE]/40 hover:text-[#E06C75] hover:bg-[#E06C75]/10 transition-all"
-                            title="Cancel"
-                          >
-                            <X size={11} />
-                          </button>
-                        )}
-
-                        {/* Delete button */}
-                        <button
-                          onClick={() => handleDeleteMember(member.id)}
-                          disabled={deletingId === member.id}
-                          className="absolute top-2 left-2 p-1 rounded-md text-[#8FAABE]/30 opacity-0 group-hover:opacity-100 hover:text-[#E06C75] hover:bg-[#E06C75]/10 transition-all disabled:opacity-40"
-                          title="Remove"
-                        >
-                          {deletingId === member.id ? (
-                            <Loader2 size={11} className="animate-spin" />
-                          ) : (
-                            <Trash2 size={11} />
-                          )}
-                        </button>
-
-                        {/* Avatar */}
-                        <div className="relative flex-shrink-0 mb-4">
-                          {member.avatar_url ? (
-                            <img
-                              src={member.avatar_url}
-                              alt={member.name}
-                              className="w-24 h-24 rounded-full object-cover border-2 border-[#1E3F5E]/60"
-                            />
-                          ) : (
-                            <div className="w-24 h-24 rounded-full bg-[#162F4D] border-2 border-[#1E3F5E]/60 flex items-center justify-center">
-                              <UserCircle size={44} className="text-[#8FAABE]/30" />
-                            </div>
-                          )}
-                          {isEditing && (
-                            <button
-                              onClick={() => fileInputRefs.current[member.id]?.click()}
-                              disabled={uploadingId === member.id}
-                              className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center cursor-pointer transition-opacity"
-                            >
-                              {uploadingId === member.id ? (
-                                <Loader2 size={20} className="animate-spin text-white" />
-                              ) : (
-                                <Camera size={20} className="text-white" />
-                              )}
-                            </button>
-                          )}
-                          <input
-                            ref={(el) => { fileInputRefs.current[member.id] = el; }}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleAvatarUpload(member.id, file);
-                              e.target.value = '';
-                            }}
-                          />
-                        </div>
-
-                        {/* Name */}
-                        {isEditing ? (
-                          <div className="flex items-center gap-1 mb-1 w-full">
-                            <input
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter') handleNameUpdate(member.id); if (e.key === 'Escape') setEditingId(null); }}
-                              className="flex-1 min-w-0 bg-[#162F4D] border border-[#1E3F5E]/60 rounded px-2 py-1 text-xs text-[#E8EDF2] text-center outline-none focus:border-[#5B9BD5]"
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleNameUpdate(member.id)}
-                              className="p-1 rounded text-[#98C379] hover:bg-[#98C379]/10 transition-colors flex-shrink-0"
-                              title="Save"
-                            >
-                              <Check size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <p className="text-sm font-semibold text-[#E8EDF2] truncate w-full">{member.name}</p>
-                        )}
-                        <p className="text-xs text-[#8FAABE]/50 truncate w-full mt-0.5">{member.role}</p>
-                      </div>
-                    );
-                  })}
-
-                  {/* Add Member Card */}
-                  <div className="bg-[#0D1F33] border-2 border-dashed border-[#1E3F5E]/40 rounded-xl p-5 flex flex-col items-center text-center">
-                    {/* Photo preview or upload trigger */}
-                    <div className="relative flex-shrink-0 mb-4">
-                      {newMemberPreview ? (
-                        <img
-                          src={newMemberPreview}
-                          alt="New member"
-                          className="w-24 h-24 rounded-full object-cover border-2 border-[#1E3F5E]/60 cursor-pointer"
-                          onClick={() => newMemberFileRef.current?.click()}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={teamMembers.map((m) => m.id)} strategy={rectSortingStrategy} disabled={!creditsEditMode}>
+                    <div className="flex flex-wrap justify-center gap-6">
+                      {teamMembers.map((member) => (
+                        <SortableMemberCard
+                          key={member.id}
+                          member={member}
+                          creditsEditMode={creditsEditMode}
+                          editingId={editingId}
+                          editName={editName}
+                          uploadingId={uploadingId}
+                          deletingId={deletingId}
+                          onEditStart={(id, name) => { setEditingId(id); setEditName(name); }}
+                          onEditCancel={() => setEditingId(null)}
+                          onEditNameChange={setEditName}
+                          onNameSave={handleNameUpdate}
+                          onAvatarUpload={handleAvatarUpload}
+                          onRemoveAvatar={handleRemoveAvatar}
+                          onDelete={handleDeleteMember}
+                          fileInputRefs={fileInputRefs}
                         />
-                      ) : (
-                        <button
-                          onClick={() => newMemberFileRef.current?.click()}
-                          className="w-24 h-24 rounded-full bg-[#162F4D] border-2 border-dashed border-[#1E3F5E]/60 flex items-center justify-center cursor-pointer hover:border-[#5B9BD5]/50 transition-colors"
-                        >
-                          <Camera size={24} className="text-[#8FAABE]/30" />
-                        </button>
-                      )}
-                      <input
-                        ref={newMemberFileRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setNewMemberFile(file);
-                            setNewMemberPreview(URL.createObjectURL(file));
-                          }
-                          e.target.value = '';
-                        }}
-                      />
-                    </div>
-
-                    {/* Name input */}
-                    <input
-                      value={newMemberName}
-                      onChange={(e) => setNewMemberName(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddMember(); }}
-                      placeholder="Name"
-                      className="w-full bg-[#162F4D] border border-[#1E3F5E]/60 rounded px-2 py-1 text-xs text-[#E8EDF2] text-center outline-none focus:border-[#5B9BD5] mb-2 placeholder:text-[#8FAABE]/30"
-                    />
-
-                    {/* Role selector */}
-                    <div className="flex gap-1 w-full mb-3">
-                      {(['Researcher', 'Developer'] as const).map((role) => (
-                        <button
-                          key={role}
-                          onClick={() => setNewMemberRole(role)}
-                          className={cn(
-                            'flex-1 py-1 rounded text-[9px] font-medium transition-colors',
-                            newMemberRole === role
-                              ? 'bg-[#5B9BD5] text-white'
-                              : 'bg-[#162F4D] text-[#8FAABE]/40 hover:text-[#E8EDF2]'
-                          )}
-                        >
-                          {role}
-                        </button>
                       ))}
-                    </div>
 
-                    {/* Add button */}
-                    <button
-                      onClick={handleAddMember}
-                      disabled={addingMember || !newMemberName.trim()}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-medium bg-[#98C379]/10 text-[#98C379] hover:bg-[#98C379]/20 transition-colors disabled:opacity-40"
-                    >
-                      {addingMember ? (
-                        <Loader2 size={10} className="animate-spin" />
-                      ) : (
-                        <Plus size={10} />
+                      {/* Add Member Card - only visible in edit mode */}
+                      {creditsEditMode && (
+                        <div className="bg-[#0D1F33] border-2 border-dashed border-[#1E3F5E]/40 rounded-xl p-5 flex flex-col items-center text-center w-[180px]">
+                          <div className="relative flex-shrink-0 mb-4">
+                            {newMemberPreview ? (
+                              <img
+                                src={newMemberPreview}
+                                alt="New member"
+                                className="w-24 h-24 rounded-full object-cover border-2 border-[#1E3F5E]/60 cursor-pointer"
+                                onClick={() => newMemberFileRef.current?.click()}
+                              />
+                            ) : (
+                              <button
+                                onClick={() => newMemberFileRef.current?.click()}
+                                className="w-24 h-24 rounded-full bg-[#162F4D] border-2 border-dashed border-[#1E3F5E]/60 flex items-center justify-center cursor-pointer hover:border-[#5B9BD5]/50 transition-colors"
+                              >
+                                <Camera size={24} className="text-[#8FAABE]/30" />
+                              </button>
+                            )}
+                            <input
+                              ref={newMemberFileRef}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setNewMemberFile(file);
+                                  setNewMemberPreview(URL.createObjectURL(file));
+                                }
+                                e.target.value = '';
+                              }}
+                            />
+                          </div>
+                          <input
+                            value={newMemberName}
+                            onChange={(e) => setNewMemberName(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleAddMember(); }}
+                            placeholder="Name"
+                            className="w-full bg-[#162F4D] border border-[#1E3F5E]/60 rounded px-2 py-1 text-xs text-[#E8EDF2] text-center outline-none focus:border-[#5B9BD5] mb-2 placeholder:text-[#8FAABE]/30"
+                          />
+                          <div className="flex gap-1 w-full mb-3">
+                            {(['Researcher', 'Developer'] as const).map((role) => (
+                              <button
+                                key={role}
+                                onClick={() => setNewMemberRole(role)}
+                                className={cn(
+                                  'flex-1 py-1 rounded text-[9px] font-medium transition-colors',
+                                  newMemberRole === role
+                                    ? 'bg-[#5B9BD5] text-white'
+                                    : 'bg-[#162F4D] text-[#8FAABE]/40 hover:text-[#E8EDF2]'
+                                )}
+                              >
+                                {role}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            onClick={handleAddMember}
+                            disabled={addingMember || !newMemberName.trim()}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-medium bg-[#98C379]/10 text-[#98C379] hover:bg-[#98C379]/20 transition-colors disabled:opacity-40"
+                          >
+                            {addingMember ? (
+                              <Loader2 size={10} className="animate-spin" />
+                            ) : (
+                              <Plus size={10} />
+                            )}
+                            Add
+                          </button>
+                        </div>
                       )}
-                      Add
-                    </button>
-                  </div>
-                </div>
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
           </div>
