@@ -107,6 +107,35 @@ const s = {
     marginTop: '6px',
     paddingTop: '3px',
   },
+  signatureSection: {
+    marginTop: '12px',
+    textAlign: 'right' as const,
+    fontSize: '7px',
+  },
+  signatureText: {
+    fontSize: '7px',
+    marginBottom: '8px',
+    lineHeight: 1.3,
+  },
+  signatureLines: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '16px',
+    marginTop: '8px',
+  },
+  signatureBox: {
+    textAlign: 'center' as const,
+  },
+  signatureLine: {
+    borderBottom: '1px solid #000',
+    width: '80px',
+    marginBottom: '2px',
+    minHeight: '20px',
+  },
+  signatureLabel: {
+    fontSize: '6px',
+    textAlign: 'center' as const,
+  },
 } as const;
 
 export function PrintableReceipt({ order, companyOverride }: PrintableReceiptProps) {
@@ -198,6 +227,24 @@ export function PrintableReceipt({ order, companyOverride }: PrintableReceiptPro
 
       {/* Total */}
       <div style={s.totalRow}>Total = {formatPrice(order.total_amount)}</div>
+
+      {/* Signature Section */}
+      <div style={s.signatureSection}>
+        <div style={s.signatureText}>
+          Received the above goods and services<br />in good order and condition
+        </div>
+        <div style={{ marginTop: '8px', fontSize: '7px' }}>By:</div>
+        <div style={s.signatureLines}>
+          <div style={s.signatureBox}>
+            <div style={s.signatureLine}></div>
+            <div style={s.signatureLabel}>Authorized Signature</div>
+          </div>
+          <div style={s.signatureBox}>
+            <div style={s.signatureLine}></div>
+            <div style={s.signatureLabel}>Costumer Signature over printed name</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
