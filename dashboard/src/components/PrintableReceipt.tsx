@@ -88,21 +88,18 @@ const s = {
     textAlign: 'left' as const,
     padding: '2px',
     verticalAlign: 'top' as const,
-    border: '1px solid #000',
   },
   tdCenter: {
     textAlign: 'center' as const,
     padding: '2px',
     verticalAlign: 'top' as const,
     whiteSpace: 'nowrap' as const,
-    border: '1px solid #000',
   },
   tdRight: {
     textAlign: 'right' as const,
     padding: '2px',
     verticalAlign: 'top' as const,
     whiteSpace: 'nowrap' as const,
-    border: '1px solid #000',
   },
   totalRow: {
     textAlign: 'right' as const,
@@ -114,7 +111,6 @@ const s = {
   signatureSection: {
     marginTop: '12px',
     fontSize: '7px',
-    border: '1px solid #000',
     padding: '6px',
   },
   signatureText: {
