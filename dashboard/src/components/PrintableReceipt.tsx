@@ -28,13 +28,12 @@ const s = {
   companyName: {
     fontSize: '9px',
     fontWeight: 'bold' as const,
-    textTransform: 'uppercase' as const,
-    textAlign: 'center' as const,
+    textAlign: 'left' as const,
     marginBottom: '1px',
   },
   addressLine: {
     fontSize: '7px',
-    textAlign: 'center' as const,
+    textAlign: 'left' as const,
     lineHeight: 1.3,
   },
   headerRow: {
@@ -61,52 +60,48 @@ const s = {
     borderCollapse: 'collapse' as const,
     fontSize: '7.5px',
     marginTop: '3px',
+    border: '1px solid #000',
   },
   thLeft: {
     textAlign: 'left' as const,
     fontWeight: 'bold' as const,
-    paddingBottom: '2px',
-    paddingRight: '2px',
+    padding: '2px',
+    border: '1px solid #000',
   },
   thCenter: {
     textAlign: 'center' as const,
     fontWeight: 'bold' as const,
-    paddingBottom: '2px',
-    paddingLeft: '2px',
-    paddingRight: '2px',
+    padding: '2px',
+    border: '1px solid #000',
   },
   thRight: {
     textAlign: 'right' as const,
     fontWeight: 'bold' as const,
-    paddingBottom: '2px',
-    paddingLeft: '2px',
+    padding: '2px',
+    border: '1px solid #000',
   },
   tableHeaderRow: {
     borderBottom: '1px solid #000',
   },
   tdLeft: {
     textAlign: 'left' as const,
-    paddingTop: '2px',
-    paddingBottom: '2px',
-    paddingRight: '2px',
+    padding: '2px',
     verticalAlign: 'top' as const,
+    border: '1px solid #000',
   },
   tdCenter: {
     textAlign: 'center' as const,
-    paddingTop: '2px',
-    paddingBottom: '2px',
-    paddingLeft: '2px',
-    paddingRight: '2px',
+    padding: '2px',
     verticalAlign: 'top' as const,
     whiteSpace: 'nowrap' as const,
+    border: '1px solid #000',
   },
   tdRight: {
     textAlign: 'right' as const,
-    paddingTop: '2px',
-    paddingBottom: '2px',
-    paddingLeft: '2px',
+    padding: '2px',
     verticalAlign: 'top' as const,
     whiteSpace: 'nowrap' as const,
+    border: '1px solid #000',
   },
   totalRow: {
     textAlign: 'right' as const,
@@ -121,9 +116,9 @@ export function PrintableReceipt({ order, companyOverride }: PrintableReceiptPro
   const { profile } = useCompanyProfile();
 
   const co = companyOverride || {};
-  const companyName = co.company_name ?? profile?.company_name ?? "GEL'S CONSUMER GOODS TRADING";
-  const address = co.address ?? profile?.address ?? 'Purok Tambis, Curvada\nSan Remigio, Cebu, Philippines 6011';
-  const phone = co.contact_phone ?? profile?.contact_phone ?? 'TEL (032) 167815 / 0936 3446597';
+  const companyName = co.company_name ?? profile?.company_name ?? 'gels consumer trading';
+  const address = co.address ?? profile?.address ?? 'Purok Tambis, Curvada\nSan Remigio Cebu, PhIlippines, 6011';
+  const phone = co.contact_phone ?? profile?.contact_phone ?? 'Tel.(032)3167836/0936-9445027';
 
   // Format date as MM/DD/YYYY
   const formatReceiptDate = (dateString: string) => {
@@ -150,7 +145,7 @@ export function PrintableReceipt({ order, companyOverride }: PrintableReceiptPro
   return (
     <div id="printable-receipt" style={s.root}>
       {/* Header - Company Info */}
-      <div className="receipt-section" style={{ textAlign: 'center', marginBottom: '3px' }}>
+      <div className="receipt-section" style={{ textAlign: 'left', marginBottom: '3px' }}>
         <div style={s.companyName}>{companyName}</div>
         {address.split('\n').map((line, i) => (
           <div key={i} style={s.addressLine}>
